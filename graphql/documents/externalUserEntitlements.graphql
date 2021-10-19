@@ -1,0 +1,12 @@
+fragment ExternalUserEntitlements on ExternalUserEntitlements {
+  createdAtEpochMs
+  updatedAtEpochMs
+  version
+  externalId
+  owner
+  entitlementsSetName
+  entitlements {
+    ...Entitlement
+  }
+  transitionsRelativeToEpochMs
+}

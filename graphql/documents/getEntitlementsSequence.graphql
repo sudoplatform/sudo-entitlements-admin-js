@@ -1,0 +1,5 @@
+query GetEntitlementsSequence($input: GetEntitlementsSequenceInput!) {
+  getEntitlementsSequence(input: $input) {
+    ...EntitlementsSequence
+  }
+}

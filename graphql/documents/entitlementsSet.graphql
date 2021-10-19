@@ -1,0 +1,10 @@
+fragment EntitlementsSet on EntitlementsSet {
+  createdAtEpochMs
+  updatedAtEpochMs
+  version
+  name
+  description
+  entitlements {
+    ...Entitlement
+  }
+}

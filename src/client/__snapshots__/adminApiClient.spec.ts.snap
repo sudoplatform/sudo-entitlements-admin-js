@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AdminApiClient test suite addEntitlementsSequence tests should throw a FatalError on no result 1`] = `"addEntitlementsSequence did not return any result."`;
+
+exports[`AdminApiClient test suite addEntitlementsSet tests should throw a FatalError on no result 1`] = `"addEntitlementsSet did not return any result."`;
+
+exports[`AdminApiClient test suite applyEntitlementsSequenceToUser tests should throw a FatalError on no result 1`] = `"applyEntitlementsSequenceToUser unexpectedly falsy"`;
+
+exports[`AdminApiClient test suite applyEntitlementsSetToUser tests should throw a FatalError on no result 1`] = `"applyEntitlementsSetToUser did not return any result."`;
+
+exports[`AdminApiClient test suite applyEntitlementsToUser tests should throw a FatalError on no result 1`] = `"applyEntitlementsToUser did not return any result."`;
+
+exports[`AdminApiClient test suite removeEntitlementsSequence tests should throw a FatalError on no result 1`] = `"removeEntitlementsSequence did not return any result."`;
+
+exports[`AdminApiClient test suite removeEntitlementsSet tests should throw a FatalError on no result 1`] = `"removeEntitlementsSet did not return any result."`;
+
+exports[`AdminApiClient test suite setEntitlementsSequence tests should throw a FatalError on no result 1`] = `"setEntitlementsSequence did not return any result."`;
+
+exports[`AdminApiClient test suite setEntitlementsSet tests should throw a FatalError on no result 1`] = `"setEntitlementsSet did not return any result."`;

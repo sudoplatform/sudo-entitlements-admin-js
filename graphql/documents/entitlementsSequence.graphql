@@ -1,0 +1,10 @@
+fragment EntitlementsSequence on EntitlementsSequence {
+  name
+  description
+  createdAtEpochMs
+  updatedAtEpochMs
+  version
+  transitions {
+    ...EntitlementsSequenceTransition
+  }
+}

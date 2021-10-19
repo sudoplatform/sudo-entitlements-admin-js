@@ -1,0 +1,5 @@
+query ListEntitlementsSequences($nextToken: String) {
+  listEntitlementsSequences(nextToken: $nextToken) {
+    ...EntitlementsSequencesConnection
+  }
+}

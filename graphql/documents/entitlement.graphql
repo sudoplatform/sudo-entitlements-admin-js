@@ -1,0 +1,5 @@
+fragment Entitlement on Entitlement {
+  name
+  description
+  value
+}

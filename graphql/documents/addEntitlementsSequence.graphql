@@ -1,0 +1,5 @@
+mutation AddEntitlementsSequence($input: AddEntitlementsSequenceInput!) {
+  addEntitlementsSequence(input: $input) {
+    ...EntitlementsSequence
+  }
+}

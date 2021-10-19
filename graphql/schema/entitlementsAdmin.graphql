@@ -1,0 +1,312 @@
+## See @anonyome/cdk-constructs/lib/entitledService/schema.graphql for additional types
+## referenced here
+
+# A set of entitlements
+type EntitlementsSet @aws_api_key @aws_iam {
+  # Time of initial creation of an entitlements set in milliseconds
+  # since epoch. Number is integral, float type provides sufficient
+  # precision.
+  createdAtEpochMs: Float!
+
+  # Time of most recent update of an entitlements set in milliseconds
+  # since epoch. Number is integral, float type provides sufficient
+  # precision.
+  updatedAtEpochMs: Float!
+
+  # Version of the entitlements set. Incremented each time an update is made.
+  version: Int!
+
+  # Name of the entitlements set.
+  name: String!
+
+  # Optional description of the entitlements set.
+  description: String
+
+  # Entitlements conferred by this entitlements set.
+  entitlements: [Entitlement!]!
+}
+
+# Pagination connection for use when listing entitlements sets
+type EntitlementsSetsConnection @aws_api_key @aws_iam {
+  items: [EntitlementsSet!]!
+  nextToken: String
+}
+
+# Definition of a single transition within an entitlements sequence
+type EntitlementsSequenceTransition @aws_api_key @aws_iam {
+  # Name of entitlements set
+  entitlementsSetName: String!
+  
+  # ISO8601 period string - if not specified then this transition
+  # is the final state for all users on the sequence.
+  duration: String
+}
+
+# Definition of a sequence of entitlements sets through which a user will transition
+type EntitlementsSequence @aws_api_key @aws_iam {
+  # Name of the entitlements sequence
+  name: String!
+
+  # Description of the entitlements sequence
+  description: String
+
+  # Time of initial creation of an entitlements sequence in milliseconds
+  # since epoch. Number is integral, float type provides sufficient
+  # precision.
+  createdAtEpochMs: Float!,
+
+  # Time of most recent update of an entitlements sequence in milliseconds
+  # since epoch. Number is integral, float type provides sufficient
+  # precision.
+  updatedAtEpochMs: Float!,
+
+  # Version of the entitlements sequence. Incremented each time an update is made.
+  version: Int!
+
+  # Sequence of transitions a user will go through in order. Must not be empty.
+  transitions: [EntitlementsSequenceTransition!]!
+}
+
+# Pagination connection for use when listing entitlements sequences
+type EntitlementsSequencesConnection @aws_api_key @aws_iam {
+  items: [EntitlementsSequence!]!
+  nextToken: String
+}
+
+# Effective entitlements for an external user
+type ExternalUserEntitlements @aws_api_key @aws_iam {
+  # Time of initial creation of user entitlements mapping in milliseconds
+  # since epoch. Number is integral, float type provides sufficient
+  # precision.
+  createdAtEpochMs: Float!
+
+  # Time of last updates of user entitlements mapping in milliseconds
+  # since epoch. Number is integral, float type provides sufficient
+  # precision.
+  updatedAtEpochMs: Float!
+
+  # Version number of the user's entitlements. This is incremented every
+  # time there is a change of entitlements set or explicit entitlements
+  # for this user.
+  #
+  # For users entitled by entitlement set, the fractional part of this version
+  # specifies the version of the entitlements set itself. Entitlements set version
+  # is divided by 100000 then added to the user entitlements version
+  #
+  # This ensures that the version of user entitlements always increases mon
+  version: Float!
+
+  # External IDP identifier identifying the user
+  externalId: String!
+
+  # Sudo Platform owner. This value matches the subject in identity
+  # tokens used to authenticate to Sudo Platform services.
+  owner: String
+
+  # Name of the entitlements set specified for this user. Will be undefined
+  # if entitlements have been specified explicitly rather than by an
+  # entitlements set name.
+  entitlementsSetName: String
+
+  # Effective entitlements for the user either obtained from the entitlements
+  # set or as specified explicitly for this user.
+  entitlements: [Entitlement!]!
+
+  # Milliseconds since epoch from when user's transitions should
+  # be calculated. Defaults to current time.
+  # Is a Float only for precision. Must be an integral value.
+  transitionsRelativeToEpochMs: Float
+}
+
+# An aggregated list of entitlement consumption information for an external user.
+type ExternalEntitlementsConsumption @aws_api_key @aws_iam {
+  # User's active entitlements
+  entitlements: ExternalUserEntitlements!
+  # User's entitlement consumption
+  consumption: [EntitlementConsumption!]!
+}
+
+# Input representing an entitlement
+input EntitlementInput {
+  # Name of the entitlement
+  name: String!
+
+  # Description, if any, of the entitlement as specified by the entitlements
+  #  administrator.
+  description: String
+
+  # Value of the entitlement.
+  value: Int!
+}
+
+# Input for the setEntitlementsSet mutation
+input SetEntitlementsSetInput {
+  name: String!
+  description: String
+  entitlements: [EntitlementInput!]!
+}
+
+# Input for the addEntitlementsSet mutation
+input AddEntitlementsSetInput {
+  name: String!
+  description: String
+  entitlements: [EntitlementInput!]!
+}
+
+# Input for the getEntitlementsSet query
+input GetEntitlementsSetInput {
+  name: String!
+}
+
+# Input for the removeEntitlementsSet mutation
+input RemoveEntitlementsSetInput {
+  name: String!
+}
+
+# Input for the applyEntitlementsSetToUser mutation
+input ApplyEntitlementsSetToUserInput {
+  externalId: String!
+  entitlementsSetName: String!
+}
+
+# Input for the applyEntitlementsSequenceToUser mutation
+input ApplyEntitlementsSequenceToUserInput {
+  externalId: String!
+  entitlementsSequenceName: String!
+
+  # Milliseconds since epoch from when user's transitions should
+  # be calculated. Defaults to current time.
+  # Is a Float only for precision. Must be an integral value.
+  transitionsRelativeToEpochMs: Float
+}
+
+# Input for the applyEntitlementsToUser mutation
+input ApplyEntitlementsToUserInput {
+  externalId: String!
+  entitlements: [EntitlementInput!]!
+}
+
+# Input for the getEntitlementsForUser query
+input GetEntitlementsForUserInput {
+  externalId: String!
+}
+
+# Input of a single transition within an entitlements sequence
+input EntitlementsSequenceTransitionInput {
+  # Name of entitlements set
+  entitlementsSetName: String!
+  
+  # ISO8601 period string - if not specified then this transition
+  # is the final state for all users on the sequence.
+  duration: String
+}
+
+# Input for the getEntitlementsSequence query
+input GetEntitlementsSequenceInput {
+  name: String!
+}
+
+# Input for the addEntitlementsSequence mutation
+input AddEntitlementsSequenceInput {
+  # Name of the entitlements sequence
+  name: String!
+
+  # Description of the entitlements sequence
+  description: String
+
+  # Sequence of transitions a user will go through in order. Must not be empty.
+  transitions: [EntitlementsSequenceTransitionInput!]!
+}
+
+# Input for the setEntitlementsSequence mutation
+input SetEntitlementsSequenceInput {
+  # Name of the entitlements sequence
+  name: String!
+
+  # Description of the entitlements sequence
+  description: String
+
+  # Sequence of transitions a user will go through in order. Must not be empty.
+  transitions: [EntitlementsSequenceTransitionInput!]!
+}
+
+# Input for the removeEntitlementsSequence mutation
+input RemoveEntitlementsSequenceInput {
+  name: String!
+}
+
+type Query {
+  # Gets an entitlement set.
+  getEntitlementsSet(input: GetEntitlementsSetInput!): EntitlementsSet
+    @aws_api_key
+    @aws_iam
+
+  # Retrieves all entitlements sets.
+  listEntitlementsSets(nextToken: String): EntitlementsSetsConnection!
+    @aws_api_key
+    @aws_iam
+
+  # Gets an entitlement sequence.
+  getEntitlementsSequence(input: GetEntitlementsSequenceInput!): EntitlementsSequence
+    @aws_api_key
+    @aws_iam
+
+  # Retrieves all entitlements sequences.
+  listEntitlementsSequences(nextToken: String): EntitlementsSequencesConnection!
+    @aws_api_key
+    @aws_iam
+
+  # Retrieve effective entitlements for a given external user.
+  getEntitlementsForUser(
+    input: GetEntitlementsForUserInput!
+  ): ExternalEntitlementsConsumption! @aws_api_key @aws_iam
+}
+
+type Mutation {
+  # Adds an entitlement set
+  addEntitlementsSet(input: AddEntitlementsSetInput!): EntitlementsSet!
+    @aws_api_key
+    @aws_iam
+
+  # Change the entitlements conferred by an entitlements set.
+  setEntitlementsSet(input: SetEntitlementsSetInput!): EntitlementsSet!
+    @aws_api_key
+    @aws_iam
+
+  # Remove an entitlements set. Any users configured against this entitlements
+  # set will become unentitled.
+  removeEntitlementsSet(input: RemoveEntitlementsSetInput!): EntitlementsSet
+    @aws_api_key
+    @aws_iam
+
+  # Adds an entitlement sequence
+  addEntitlementsSequence(input: AddEntitlementsSequenceInput!): EntitlementsSequence!
+    @aws_api_key
+    @aws_iam
+
+  # Replace the definition of an entitlements sequence
+  setEntitlementsSequence(input: SetEntitlementsSequenceInput!): EntitlementsSequence!
+    @aws_api_key
+    @aws_iam
+
+  # Remove an entitlements sequence. Any users configured against this entitlements
+  # sequence will become unentitled.
+  removeEntitlementsSequence(input: RemoveEntitlementsSequenceInput!): EntitlementsSequence
+    @aws_api_key
+    @aws_iam
+
+  # Apply an entitlement set with the specified name to a user.
+  applyEntitlementsSetToUser(
+    input: ApplyEntitlementsSetToUserInput!
+  ): ExternalUserEntitlements! @aws_api_key @aws_iam
+
+  # Apply an entitlement sequence with the specified name to a user.
+  applyEntitlementsSequenceToUser(
+    input: ApplyEntitlementsSequenceToUserInput!
+  ): ExternalUserEntitlements! @aws_api_key @aws_iam
+
+  # Apply entitlements to a user without using a named entitlements set.
+  applyEntitlementsToUser(
+    input: ApplyEntitlementsToUserInput!
+  ): ExternalUserEntitlements! @aws_api_key @aws_iam
+}

@@ -1,0 +1,8 @@
+fragment ExternalEntitlementsConsumption on ExternalEntitlementsConsumption {
+  entitlements {
+    ...ExternalUserEntitlements
+  }
+  consumption {
+    ...EntitlementConsumption
+  }
+}

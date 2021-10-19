@@ -1,0 +1,26 @@
+{
+  "testEnvironment": "jsdom",
+  "preset": "ts-jest",
+  "testMatch": ["<rootDir>/src/**/*.spec.ts", "<rootDir>/test/**/*.test.ts"],
+  "testPathIgnorePatterns": ["/node_modules/", "/lib/"],
+  "clearMocks": true,
+  "collectCoverageFrom": [
+    "src/**/*.ts",
+    "!**/*.spec.ts",
+    "!**/*.d.ts",
+    "!node_modules/**"
+  ],
+  "coverageReporters": ["text", "json-summary", "lcov"],
+  "coverageDirectory": "<rootDir>/coverage",
+  "coverageThreshold": {
+    "global": {
+      "statements": 90,
+      "branches": 0,
+      "functions": 90,
+      "lines": 90,
+      "ts-jest": {
+        "tsConfig": "tsconfig.test.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,5 @@
+mutation RemoveEntitlementsSet($input: RemoveEntitlementsSetInput!) {
+  removeEntitlementsSet(input: $input) {
+    ...EntitlementsSet
+  }
+}

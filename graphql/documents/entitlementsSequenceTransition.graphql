@@ -1,0 +1,4 @@
+fragment EntitlementsSequenceTransition on EntitlementsSequenceTransition {
+  entitlementsSetName
+  duration
+}

@@ -1,0 +1,441 @@
+import { DefaultConfigurationManager } from '@sudoplatform/sudo-common'
+import * as dotenv from 'dotenv'
+import fs from 'fs'
+import { v4 } from 'uuid'
+
+import {
+  DefaultSudoEntitlementsAdminClient,
+  Entitlement,
+  EntitlementsSequenceTransition,
+  ExternalUserEntitlements,
+  SudoEntitlementsAdminClient,
+} from '../../src'
+
+dotenv.config()
+
+require('isomorphic-fetch')
+
+const updatableEntitlement = process.env.ENT_UPDATABLE_ENTITLEMENT
+const describeUpdatable = updatableEntitlement ? describe : describe.skip
+
+describe('sudo-entitlements-admin API integration tests', () => {
+  jest.setTimeout(45000)
+
+  let sudoEntitlementsAdmin: SudoEntitlementsAdminClient
+  let beforeAllComplete = false
+
+  beforeAll(() => {
+    const sudoPlatformConfig =
+      process.env.SUDO_PLATFORM_CONFIG ||
+      `${__dirname}/../../config/sudoplatformconfig.json`
+
+    expect(sudoPlatformConfig).toMatch(/.+/)
+
+    DefaultConfigurationManager.getInstance().setConfig(
+      fs.readFileSync(sudoPlatformConfig).toString(),
+    )
+
+    sudoEntitlementsAdmin = new DefaultSudoEntitlementsAdminClient(
+      process.env.ADMIN_API_KEY || 'IAM',
+    )
+    beforeAllComplete = true
+  })
+
+  afterAll(() => {
+    beforeAllComplete = false
+  })
+
+  // Failures in beforeAll do not stop tests executing
+  function expectBeforeAllComplete(): void {
+    expect({ beforeAllComplete }).toEqual({ beforeAllComplete: true })
+  }
+
+  const run = v4()
+
+  describe('Read-only tests', () => {
+    it('should successfully read entitlements sets', async () => {
+      expectBeforeAllComplete()
+
+      for (
+        let entitlementsSetsConnection =
+          await sudoEntitlementsAdmin.listEntitlementsSets();
+        entitlementsSetsConnection.nextToken;
+        entitlementsSetsConnection =
+          await sudoEntitlementsAdmin.listEntitlementsSets(
+            entitlementsSetsConnection.nextToken,
+          )
+      ) {
+        for (const listedEntitlementsSet of entitlementsSetsConnection.items) {
+          const gottenEntitlementsSet =
+            await sudoEntitlementsAdmin.getEntitlementsSet(
+              listedEntitlementsSet.name,
+            )
+
+          // It's possible we're running this against an instance where entitlements
+          // sets are changing so cater for that
+          expect(gottenEntitlementsSet?.version).toBeGreaterThanOrEqual(
+            listedEntitlementsSet.version,
+          )
+          if (
+            gottenEntitlementsSet?.version === listedEntitlementsSet.version
+          ) {
+            expect(gottenEntitlementsSet).toEqual(listedEntitlementsSet)
+          } else {
+            expect(gottenEntitlementsSet).toMatchObject({
+              name: listedEntitlementsSet.name,
+            })
+          }
+        }
+      }
+    })
+
+    it('should return undefined when removing a non-existent entitlements set', async () => {
+      expectBeforeAllComplete()
+
+      await expect(
+        sudoEntitlementsAdmin.removeEntitlementsSet(`does-not-exist:${run}`),
+      ).resolves.toBeUndefined()
+    })
+
+    it('should successfully list entitlements sequences', async () => {
+      expectBeforeAllComplete()
+
+      for (
+        let entitlementsSequencesConnection =
+          await sudoEntitlementsAdmin.listEntitlementsSequences();
+        entitlementsSequencesConnection.nextToken;
+        entitlementsSequencesConnection =
+          await sudoEntitlementsAdmin.listEntitlementsSequences(
+            entitlementsSequencesConnection.nextToken,
+          )
+      ) {
+        for (const listedEntitlementsSequence of entitlementsSequencesConnection.items) {
+          const gottenEntitlementsSequence =
+            await sudoEntitlementsAdmin.getEntitlementsSequence(
+              listedEntitlementsSequence.name,
+            )
+
+          // It's possible we're running this against an instance where entitlements
+          // sets are changing so cater for that
+          expect(gottenEntitlementsSequence?.version).toBeGreaterThanOrEqual(
+            listedEntitlementsSequence.version,
+          )
+          if (
+            gottenEntitlementsSequence?.version ===
+            listedEntitlementsSequence.version
+          ) {
+            expect(gottenEntitlementsSequence).toEqual(
+              listedEntitlementsSequence,
+            )
+          } else {
+            expect(gottenEntitlementsSequence).toMatchObject({
+              name: listedEntitlementsSequence.name,
+            })
+          }
+        }
+      }
+    })
+  })
+
+  describeUpdatable('Update tests', () => {
+    const entitlementsSetsToRemove: { [key: string]: null } = {}
+    const entitlementsSequencesToRemove: { [key: string]: null } = {}
+
+    afterAll(async () => {
+      if (sudoEntitlementsAdmin) {
+        for (const entitlementsSetName of Object.keys(
+          entitlementsSetsToRemove,
+        )) {
+          await sudoEntitlementsAdmin
+            .removeEntitlementsSet(entitlementsSetName)
+            .catch((err) => {
+              console.log(
+                `Unable to remove entitlements set ${entitlementsSetName}: ${err}`,
+              )
+            })
+        }
+        for (const entitlementsSequenceName of Object.keys(
+          entitlementsSequencesToRemove,
+        )) {
+          await sudoEntitlementsAdmin
+            .removeEntitlementsSequence(entitlementsSequenceName)
+            .catch((err) => {
+              console.log(
+                `Unable to remove entitlements sequence ${entitlementsSequenceName}: ${err}`,
+              )
+            })
+        }
+      }
+    })
+
+    const testEntitlement: Entitlement = {
+      name: updatableEntitlement!,
+      description: 'Test Entitlement',
+      value: 1,
+    }
+
+    it('should be able to add and remove an entitlements set', async () => {
+      expectBeforeAllComplete()
+
+      const description = 'add-and-remove'
+      const name = `${description}:${run}`
+      const input = {
+        name,
+        description,
+        entitlements: [testEntitlement],
+      }
+      const added = await sudoEntitlementsAdmin.addEntitlementsSet(input)
+      entitlementsSetsToRemove[added.name] = null
+      expect(added).toMatchObject({ ...input, version: 1 })
+
+      await expect(
+        sudoEntitlementsAdmin.removeEntitlementsSet(name),
+      ).resolves.toEqual(added)
+
+      delete entitlementsSetsToRemove[added.name]
+    })
+
+    it('should be able to apply explicit entitlements to a user and retrieve entitlements consumption', async () => {
+      expectBeforeAllComplete()
+
+      const externalId = `apply-explicit:${run}`
+      const entitlements = [testEntitlement]
+
+      const applied = await sudoEntitlementsAdmin.applyEntitlementsToUser(
+        externalId,
+        entitlements,
+      )
+
+      expect(applied).toMatchObject({
+        version: 1,
+        entitlements,
+        entitlementsSetName: undefined,
+      })
+
+      const consumption = await sudoEntitlementsAdmin.getEntitlementsForUser(
+        externalId,
+      )
+      expect(consumption.consumption).toHaveLength(0)
+      expect(consumption.entitlements).toEqual(applied)
+    })
+
+    it('should be able to apply entitlements set to a user and retrieve entitlements consumption', async () => {
+      expectBeforeAllComplete()
+
+      const externalId = `apply-set:${run}`
+
+      const description = 'apply-set'
+      const name = `${description}:${run}`
+      const input = {
+        name,
+        description,
+        entitlements: [testEntitlement],
+      }
+      const added = await sudoEntitlementsAdmin.addEntitlementsSet(input)
+      entitlementsSetsToRemove[added.name] = null
+      expect(added).toMatchObject({ ...input, version: 1 })
+
+      const applied = await sudoEntitlementsAdmin.applyEntitlementsSetToUser(
+        externalId,
+        name,
+      )
+
+      expect(applied).toMatchObject({
+        version: 1 + added.version / 100000,
+        entitlements: input.entitlements,
+        entitlementsSetName: name,
+      })
+
+      const consumption = await sudoEntitlementsAdmin.getEntitlementsForUser(
+        externalId,
+      )
+      expect(consumption.consumption).toHaveLength(0)
+      expect(consumption.entitlements).toEqual(applied)
+    })
+
+    it('should be able to add and remove an entitlements sequence', async () => {
+      expectBeforeAllComplete()
+
+      const description = 'add-and-remove-for-sequence'
+      const name = `${description}:${run}`
+      const addSetInput = {
+        name,
+        description,
+        entitlements: [testEntitlement],
+      }
+      const addedSet = await sudoEntitlementsAdmin.addEntitlementsSet(
+        addSetInput,
+      )
+      entitlementsSetsToRemove[addedSet.name] = null
+      expect(addedSet).toMatchObject({ ...addSetInput, version: 1 })
+
+      const testEntitlementSequenceTrainsition: EntitlementsSequenceTransition =
+        {
+          entitlementsSetName: name,
+          duration: 'PT1H',
+        }
+
+      const addedSequenceInput = {
+        name,
+        description,
+        transitions: [testEntitlementSequenceTrainsition],
+      }
+
+      const addedSequence = await sudoEntitlementsAdmin.addEntitlementsSequence(
+        addedSequenceInput,
+      )
+      entitlementsSequencesToRemove[addedSequence.name] = null
+      expect(addedSequence).toMatchObject({ ...addedSequenceInput, version: 1 })
+
+      await expect(
+        sudoEntitlementsAdmin.removeEntitlementsSequence(name),
+      ).resolves.toEqual(addedSequence)
+      delete entitlementsSequencesToRemove[addedSequence.name]
+
+      await expect(
+        sudoEntitlementsAdmin.removeEntitlementsSet(name),
+      ).resolves.toEqual(addedSet)
+
+      delete entitlementsSetsToRemove[addedSet.name]
+    })
+
+    it.each`
+      withTransitionsRelativeTo
+      ${true}
+      ${false}
+    `(
+      'should be able to apply entitlements sequence withTransitionsRelativeTo: $withTransitionsRelativeTo to a user and retrieve entitlements consumption',
+      async ({ withTransitionsRelativeTo }) => {
+        expectBeforeAllComplete()
+
+        const testId = v4()
+        const externalId = `apply-sequence:${testId}`
+
+        const description = 'apply-sequence'
+        const name = `${description}:${testId}`
+        const input = {
+          name,
+          description,
+          entitlements: [testEntitlement],
+        }
+        const added = await sudoEntitlementsAdmin.addEntitlementsSet(input)
+        entitlementsSetsToRemove[added.name] = null
+        expect(added).toMatchObject({ ...input, version: 1 })
+
+        const testEntitlementSequenceTransition: EntitlementsSequenceTransition =
+          {
+            entitlementsSetName: name,
+            duration: 'PT1H',
+          }
+
+        const addedSequenceInput = {
+          name,
+          description,
+          transitions: [testEntitlementSequenceTransition],
+        }
+
+        const addedSequence =
+          await sudoEntitlementsAdmin.addEntitlementsSequence(
+            addedSequenceInput,
+          )
+        entitlementsSequencesToRemove[addedSequence.name] = null
+        expect(addedSequence).toMatchObject({
+          ...addedSequenceInput,
+          version: 1,
+        })
+
+        let applied: ExternalUserEntitlements
+        const now = new Date()
+        if (withTransitionsRelativeTo) {
+          applied = await sudoEntitlementsAdmin.applyEntitlementsSequenceToUser(
+            externalId,
+            name,
+            now,
+          )
+
+          expect(applied).toMatchObject({
+            version: 1 + added.version / 100000,
+            entitlements: input.entitlements,
+            entitlementsSetName: name,
+            transitionsRelativeTo: now,
+          })
+        } else {
+          applied = await sudoEntitlementsAdmin.applyEntitlementsSequenceToUser(
+            externalId,
+            name,
+          )
+
+          expect(applied).toMatchObject({
+            version: 1 + added.version / 100000,
+            entitlements: input.entitlements,
+            entitlementsSetName: name,
+          })
+          expect(applied.transitionsRelativeTo).toBeUndefined()
+        }
+
+        const consumption = await sudoEntitlementsAdmin.getEntitlementsForUser(
+          externalId,
+        )
+        expect(consumption.consumption).toHaveLength(0)
+        expect(consumption.entitlements).toEqual(applied)
+      },
+    )
+
+    it('should be able to add and update an entitlements sequence', async () => {
+      expectBeforeAllComplete()
+
+      const description = 'add-and-update-for-sequence'
+      const name = `${description}:${run}`
+      const addSetInput = {
+        name,
+        description,
+        entitlements: [testEntitlement],
+      }
+      const addedSet = await sudoEntitlementsAdmin.addEntitlementsSet(
+        addSetInput,
+      )
+      entitlementsSetsToRemove[addedSet.name] = null
+      expect(addedSet).toMatchObject({ ...addSetInput, version: 1 })
+
+      const testEntitlementSequenceTrainsition: EntitlementsSequenceTransition =
+        {
+          entitlementsSetName: name,
+          duration: 'PT1H',
+        }
+
+      const addedSequenceInput = {
+        name,
+        description,
+        transitions: [testEntitlementSequenceTrainsition],
+      }
+
+      const addedSequence = await sudoEntitlementsAdmin.addEntitlementsSequence(
+        addedSequenceInput,
+      )
+      entitlementsSequencesToRemove[addedSequence.name] = null
+      expect(addedSequence).toMatchObject({ ...addedSequenceInput, version: 1 })
+
+      const updateSequenceInput = {
+        ...addedSequenceInput,
+        description: 'updated now',
+      }
+      const updatedSequence =
+        await sudoEntitlementsAdmin.setEntitlementsSequence(updateSequenceInput)
+      expect(updatedSequence).toMatchObject({
+        ...updateSequenceInput,
+        version: 2,
+      })
+
+      await expect(
+        sudoEntitlementsAdmin.removeEntitlementsSequence(name),
+      ).resolves.toEqual(updatedSequence)
+      delete entitlementsSequencesToRemove[addedSequence.name]
+
+      await expect(
+        sudoEntitlementsAdmin.removeEntitlementsSet(name),
+      ).resolves.toEqual(addedSet)
+
+      delete entitlementsSetsToRemove[addedSet.name]
+    })
+  })
+})

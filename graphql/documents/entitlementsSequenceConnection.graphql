@@ -1,0 +1,6 @@
+fragment EntitlementsSequencesConnection on EntitlementsSequencesConnection {
+  items {
+    ...EntitlementsSequence
+  }
+  nextToken
+}

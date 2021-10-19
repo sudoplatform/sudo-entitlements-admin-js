@@ -1,0 +1,7 @@
+mutation RemoveEntitlementsSequence(
+  $input: RemoveEntitlementsSequenceInput!
+) {
+  removeEntitlementsSequence(input: $input) {
+    ...EntitlementsSequence
+  }
+}

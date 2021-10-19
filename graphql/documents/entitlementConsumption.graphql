@@ -1,0 +1,8 @@
+fragment EntitlementConsumption on EntitlementConsumption {
+  name
+  value
+  consumed
+  available
+  firstConsumedAtEpochMs
+  lastConsumedAtEpochMs
+}
