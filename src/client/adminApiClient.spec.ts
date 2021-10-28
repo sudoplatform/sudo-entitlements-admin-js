@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ConfigurationManager } from '@sudoplatform/sudo-common'
+import { AppSyncError, ConfigurationManager } from '@sudoplatform/sudo-common'
 import { NormalizedCacheObject } from 'apollo-cache-inmemory'
 import { NetworkStatus } from 'apollo-client'
 import { AWSAppSyncClient } from 'aws-appsync'
+import { GraphQLError } from 'graphql'
 import {
   anything,
   capture,
@@ -12,6 +13,13 @@ import {
   verify,
   when,
 } from 'ts-mockito'
+import {
+  EntitlementsSequenceNotFoundError,
+  EntitlementsSetAlreadyExistsError,
+  EntitlementsSetImmutableError,
+  EntitlementsSetNotFoundError,
+  InvalidEntitlementsError,
+} from '..'
 import {
   AddEntitlementsSetDocument,
   AddEntitlementsSetMutation,
@@ -266,6 +274,23 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
+    it('should throw a EntitlementsSetAlreadyExistsError', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSetAlreadyExistsError'
+
+      when(
+        mockClient.mutate<AddEntitlementsSetMutation>(anything()),
+      ).thenResolve({
+        errors: [error],
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.addEntitlementsSet(entitlementsSet),
+      ).rejects.toThrow(new EntitlementsSetAlreadyExistsError())
+    })
   })
 
   describe('setEntitlementsSet tests', () => {
@@ -306,6 +331,23 @@ describe('AdminApiClient test suite', () => {
         fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
+    })
+
+    it('should throw a EntitlementsSetImmutableError', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSetImmutableError'
+
+      when(
+        mockClient.mutate<SetEntitlementsSetMutation>(anything()),
+      ).thenResolve({
+        errors: [error],
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.setEntitlementsSet(entitlementsSet),
+      ).rejects.toThrow(new EntitlementsSetImmutableError())
     })
   })
 
@@ -423,6 +465,26 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
+    it('should throw a EntitlementsSetNotFoundError', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSetNotFoundError'
+
+      when(
+        mockClient.mutate<ApplyEntitlementsSetToUserMutation>(anything()),
+      ).thenResolve({
+        errors: [error],
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.applyEntitlementsSetToUser({
+          externalId,
+          entitlementsSetName: entitlementsSet.name,
+        }),
+      ).rejects.toThrow(new EntitlementsSetNotFoundError())
+    })
   })
 
   describe('applyEntitlementsToUser tests', () => {
@@ -473,6 +535,25 @@ describe('AdminApiClient test suite', () => {
         fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
+    })
+    it('should throw a InvalidEntitlementsError', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.InvalidEntitlementsError'
+
+      when(
+        mockClient.mutate<ApplyEntitlementsToUserMutation>(anything()),
+      ).thenResolve({
+        errors: [error],
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.applyEntitlementsToUser({
+          externalId,
+          entitlements: userEntitlements.entitlements,
+        }),
+      ).rejects.toThrow(new InvalidEntitlementsError())
     })
   })
 
@@ -601,6 +682,23 @@ describe('AdminApiClient test suite', () => {
         fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
+    })
+
+    it('should throw a EntitlementsSetAlreadyExistsError', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSetAlreadyExistsError'
+
+      when(
+        mockClient.mutate<AddEntitlementsSequenceMutation>(anything()),
+      ).thenResolve({
+        errors: [error],
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.addEntitlementsSequence(entitlementsSequence),
+      ).rejects.toThrow(new EntitlementsSetAlreadyExistsError())
     })
   })
 
@@ -779,6 +877,25 @@ describe('AdminApiClient test suite', () => {
         fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
+    })
+    it('should throw a EntitlementsSequenceNotFoundError', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSequenceNotFoundError'
+
+      when(
+        mockClient.mutate<ApplyEntitlementsSequenceToUserMutation>(anything()),
+      ).thenResolve({
+        errors: [error],
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.applyEntitlementsSequenceToUser({
+          externalId,
+          entitlementsSequenceName: entitlementsSequence.name,
+        }),
+      ).rejects.toThrow(new EntitlementsSequenceNotFoundError())
     })
   })
 })

@@ -11,7 +11,7 @@
 </div></div></li></ul><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="EntitlementsSequence.html" class="tsd-signature-type" data-tsd-kind="Interface">EntitlementsSequence</a><span class="tsd-signature-symbol">&gt;</span></h4><div><p>The created entitlements sequence</p>
 </div></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a id="addEntitlementsSet" class="tsd-anchor"></a><h3>add<wbr/>Entitlements<wbr/>Set</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">add<wbr/>Entitlements<wbr/>Set<span class="tsd-signature-symbol">(</span>newEntitlementsSet<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><a href="EntitlementsSet.html" class="tsd-signature-type" data-tsd-kind="Interface">EntitlementsSet</a><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">&quot;createdAt&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;updatedAt&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;version&quot;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="EntitlementsSet.html" class="tsd-signature-type" data-tsd-kind="Interface">EntitlementsSet</a><span class="tsd-signature-symbol">&gt;</span></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in src/entitlementsAdmin/entitlementsAdminClient.ts:338</li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
 <p>Add a new entitlements set</p>
-</div><dl class="tsd-comment-tags"><dt>throws</dt><dd><p>{@link InvalidEntitlementsError}</p>
+</div><dl class="tsd-comment-tags"><dt>throws</dt><dd><p><a href="../classes/InvalidEntitlementsError.html">InvalidEntitlementsError</a></p>
 <ul>
 <li>Entitlements set contains one or more entitlements with unrecognized names</li>
 </ul>
@@ -25,7 +25,7 @@
 <ul>
 <li>if the user&#39;s entitlements have been updated with a later version</li>
 </ul>
-</dd><dt>throws</dt><dd><p>{@link EntitlementsSequenceNotFoundError}</p>
+</dd><dt>throws</dt><dd><p><a href="../classes/EntitlementsSequenceNotFoundError.html">EntitlementsSequenceNotFoundError</a></p>
 <ul>
 <li>If the entitlements sequence named is not defined</li>
 </ul>
@@ -55,7 +55,7 @@
 </div></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a id="applyEntitlementsToUser" class="tsd-anchor"></a><h3>apply<wbr/>Entitlements<wbr/>To<wbr/>User</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">apply<wbr/>Entitlements<wbr/>To<wbr/>User<span class="tsd-signature-symbol">(</span>externalId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, entitlements<span class="tsd-signature-symbol">: </span><a href="Entitlement.html" class="tsd-signature-type" data-tsd-kind="Interface">Entitlement</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="ExternalUserEntitlements.html" class="tsd-signature-type" data-tsd-kind="Interface">ExternalUserEntitlements</a><span class="tsd-signature-symbol">&gt;</span></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in src/entitlementsAdmin/entitlementsAdminClient.ts:384</li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
 <p>Apply an entitlements set to a user</p>
 </div><div><p>If a record for that user&#39;s entitlements does not yet exist it will be created.</p>
-</div><dl class="tsd-comment-tags"><dt>throws</dt><dd><p>{@link InvalidEntitlementsError}</p>
+</div><dl class="tsd-comment-tags"><dt>throws</dt><dd><p><a href="../classes/InvalidEntitlementsError.html">InvalidEntitlementsError</a></p>
 <ul>
 <li>Entitlements contains one or more entitlements with unrecognized names</li>
 </ul>
@@ -116,7 +116,7 @@
 </div></div></li></ul><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="EntitlementsSequence.html" class="tsd-signature-type" data-tsd-kind="Interface">EntitlementsSequence</a><span class="tsd-signature-symbol">&gt;</span></h4><div><p>The updated entitlements sequence</p>
 </div></li></ul></section><section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-interface"><a id="setEntitlementsSet" class="tsd-anchor"></a><h3>set<wbr/>Entitlements<wbr/>Set</h3><ul class="tsd-signatures tsd-kind-method tsd-parent-kind-interface"><li class="tsd-signature tsd-kind-icon">set<wbr/>Entitlements<wbr/>Set<span class="tsd-signature-symbol">(</span>newEntitlementsSet<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Omit</span><span class="tsd-signature-symbol">&lt;</span><a href="EntitlementsSet.html" class="tsd-signature-type" data-tsd-kind="Interface">EntitlementsSet</a><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">&quot;createdAt&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;updatedAt&quot;</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">&quot;version&quot;</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="EntitlementsSet.html" class="tsd-signature-type" data-tsd-kind="Interface">EntitlementsSet</a><span class="tsd-signature-symbol">&gt;</span></li></ul><ul class="tsd-descriptions"><li class="tsd-description"><aside class="tsd-sources"><ul><li>Defined in src/entitlementsAdmin/entitlementsAdminClient.ts:355</li></ul></aside><div class="tsd-comment tsd-typography"><div class="lead">
 <p>Update an entitlements set</p>
-</div><dl class="tsd-comment-tags"><dt>throws</dt><dd><p>{@link InvalidEntitlementsError}</p>
+</div><dl class="tsd-comment-tags"><dt>throws</dt><dd><p><a href="../classes/InvalidEntitlementsError.html">InvalidEntitlementsError</a></p>
 <ul>
 <li>Entitlements set contains one or more entitlements with unrecognized names</li>
 </ul>

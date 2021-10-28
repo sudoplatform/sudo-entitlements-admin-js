@@ -1,6 +1,11 @@
 import {
+  AppSyncError,
   ConfigurationManager,
+  DecodeError,
   DefaultConfigurationManager,
+  IllegalArgumentError,
+  ServiceError,
+  UnknownGraphQLError,
 } from '@sudoplatform/sudo-common'
 import { NormalizedCacheObject } from 'apollo-cache-inmemory'
 import AWSAppSyncClient, { AUTH_TYPE } from 'aws-appsync'
@@ -54,7 +59,16 @@ import {
   SetEntitlementsSetInput,
   SetEntitlementsSetMutation,
 } from '../gen/graphqlTypes'
-import { FatalError } from '../global/error'
+import {
+  EntitlementsSequenceAlreadyExistsError,
+  EntitlementsSequenceNotFoundError,
+  EntitlementsSetAlreadyExistsError,
+  EntitlementsSetImmutableError,
+  EntitlementsSetInUse,
+  EntitlementsSetNotFoundError,
+  FatalError,
+  InvalidEntitlementsError,
+} from '../global/error'
 
 export interface AdminApiClientProps {
   apiKey: string
@@ -135,6 +149,51 @@ export class AdminApiClient {
       })
   }
 
+  private graphQLErrorsToClientError(error: AppSyncError): Error {
+    if (error.errorType === 'sudoplatform.ServiceError') {
+      return new ServiceError(error.message)
+    } else if (error.errorType === 'sudoplatform.DecodingError') {
+      return new DecodeError()
+    } else if (error.errorType === 'sudoplatform.InvalidArgumentError') {
+      return new IllegalArgumentError()
+    } else if (
+      error.errorType === 'sudoplatform.entitlements.InvalidEntitlementsError'
+    ) {
+      return new InvalidEntitlementsError()
+    } else if (
+      error.errorType === 'sudoplatform.entitlements.EntitlementsSetInUse'
+    ) {
+      return new EntitlementsSetInUse()
+    } else if (
+      error.errorType ===
+      'sudoplatform.entitlements.EntitlementsSetNotFoundError'
+    ) {
+      return new EntitlementsSetNotFoundError()
+    } else if (
+      error.errorType ===
+      'sudoplatform.entitlements.EntitlementsSetAlreadyExistsError'
+    ) {
+      return new EntitlementsSetAlreadyExistsError()
+    } else if (
+      error.errorType ===
+      'sudoplatform.entitlements.EntitlementsSequenceAlreadyExistsError'
+    ) {
+      return new EntitlementsSequenceAlreadyExistsError()
+    } else if (
+      error.errorType ===
+      'sudoplatform.entitlements.EntitlementsSequenceNotFoundError'
+    ) {
+      return new EntitlementsSequenceNotFoundError()
+    } else if (
+      error.errorType ===
+      'sudoplatform.entitlements.EntitlementsSetImmutableError'
+    ) {
+      return new EntitlementsSetImmutableError()
+    } else {
+      return new UnknownGraphQLError(error)
+    }
+  }
+
   public async getEntitlementsSet(
     input: GetEntitlementsSetInput,
   ): Promise<EntitlementsSet | null> {
@@ -143,6 +202,11 @@ export class AdminApiClient {
       variables: { input },
       fetchPolicy: queryFetchPolicy,
     })
+
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
 
     return result.data.getEntitlementsSet ?? null
   }
@@ -156,6 +220,11 @@ export class AdminApiClient {
       fetchPolicy: queryFetchPolicy,
     })
 
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
     return result.data.listEntitlementsSets
   }
 
@@ -168,6 +237,11 @@ export class AdminApiClient {
       fetchPolicy: queryFetchPolicy,
     })
 
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
     return result.data.getEntitlementsForUser
   }
 
@@ -179,6 +253,11 @@ export class AdminApiClient {
       variables: { input },
       fetchPolicy: mutationFetchPolicy,
     })
+
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
 
     if (result.data) {
       return result.data.addEntitlementsSet
@@ -196,6 +275,11 @@ export class AdminApiClient {
       fetchPolicy: mutationFetchPolicy,
     })
 
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
     if (result.data) {
       return result.data.setEntitlementsSet
     } else {
@@ -212,6 +296,11 @@ export class AdminApiClient {
       fetchPolicy: mutationFetchPolicy,
     })
 
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
     if (result.data) {
       return result.data.removeEntitlementsSet ?? null
     } else {
@@ -227,6 +316,12 @@ export class AdminApiClient {
       variables: { input },
       fetchPolicy: queryFetchPolicy,
     })
+
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
     return result.data.getEntitlementsSequence ?? null
   }
 
@@ -238,6 +333,12 @@ export class AdminApiClient {
       variables: { nextToken: nextToken ?? null },
       fetchPolicy: queryFetchPolicy,
     })
+
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
     return result.data.listEntitlementsSequences
   }
 
@@ -249,6 +350,12 @@ export class AdminApiClient {
       variables: { input },
       fetchPolicy: mutationFetchPolicy,
     })
+
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
     if (result.data) {
       return result.data.addEntitlementsSequence
     } else {
@@ -264,6 +371,12 @@ export class AdminApiClient {
       variables: { input },
       fetchPolicy: mutationFetchPolicy,
     })
+
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
     if (result.data) {
       return result.data.setEntitlementsSequence
     } else {
@@ -281,6 +394,12 @@ export class AdminApiClient {
         fetchPolicy: mutationFetchPolicy,
       },
     )
+
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
     if (result.data) {
       return result.data.removeEntitlementsSequence ?? null
     } else {
@@ -299,6 +418,12 @@ export class AdminApiClient {
         variables: { input },
         fetchPolicy: mutationFetchPolicy,
       })
+
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
     if (result.data) {
       return result.data.applyEntitlementsSequenceToUser
     } else {
@@ -317,6 +442,11 @@ export class AdminApiClient {
       },
     )
 
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
     if (result.data) {
       return result.data.applyEntitlementsSetToUser
     } else {
@@ -334,6 +464,11 @@ export class AdminApiClient {
       variables: { input },
       fetchPolicy: mutationFetchPolicy,
     })
+
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
 
     if (result.data) {
       return result.data.applyEntitlementsToUser
