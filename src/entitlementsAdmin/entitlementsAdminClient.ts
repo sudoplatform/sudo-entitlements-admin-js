@@ -82,6 +82,15 @@ export interface EntitlementsSet {
 }
 
 /**
+ * Entitled user.
+ */
+export interface EntitledUser {
+  /**
+   * External IDP identifier identifying the user
+   */
+  externalId: string
+}
+/**
  * Input when creating a new entitlements set
  */
 export type NewEntitlementsSet = Omit<
@@ -501,6 +510,15 @@ export interface SudoEntitlementsAdminClient {
     entitlementSequenceName: string,
     transitionsRelativeTo?: Date,
   ): Promise<ExternalUserEntitlements>
+
+  /**
+   * Remove entitlements and consumption records of the specified user.
+   *
+   * @param externalId External IDP user ID of user to remove.
+   *
+   * @returns The entitled user removed or undefined if the user is not found.
+   */
+  removeEntitledUser(externalId: string): Promise<EntitledUser | undefined>
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -756,6 +774,22 @@ export class DefaultSudoEntitlementsAdminClient
           transitionsRelativeToEpochMs: transitionsRelativeTo?.getTime(),
         })
       return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
+    } catch (err) {
+      throw this.extractPlatformError(err)
+    }
+  }
+
+  async removeEntitledUser(
+    externalId: string,
+  ): Promise<EntitledUser | undefined> {
+    try {
+      const removed = await this.adminApiClient.removeEntitledUser({
+        externalId,
+      })
+      if (!removed) {
+        return undefined
+      }
+      return { externalId: removed.externalId }
     } catch (err) {
       throw this.extractPlatformError(err)
     }

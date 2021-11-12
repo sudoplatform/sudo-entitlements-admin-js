@@ -23,6 +23,7 @@ describe('sudo-entitlements-admin API integration tests', () => {
 
   let sudoEntitlementsAdmin: SudoEntitlementsAdminClient
   let beforeAllComplete = false
+  const externalIds: string[] = []
 
   beforeAll(() => {
     const sudoPlatformConfig =
@@ -41,9 +42,21 @@ describe('sudo-entitlements-admin API integration tests', () => {
     beforeAllComplete = true
   })
 
-  afterAll(() => {
+  afterAll(async () => {
     beforeAllComplete = false
-  })
+
+    await Promise.all(
+      externalIds.map(async (externalId) => {
+        try {
+          await sudoEntitlementsAdmin.removeEntitledUser(externalId)
+        } catch (e) {
+          console.log({ e }, 'Failed to remove entitled user.')
+        }
+      }),
+    )
+
+    externalIds.length = 0
+  }, 30000)
 
   // Failures in beforeAll do not stop tests executing
   function expectBeforeAllComplete(): void {
@@ -206,6 +219,8 @@ describe('sudo-entitlements-admin API integration tests', () => {
         entitlements,
       )
 
+      externalIds.push(externalId)
+
       expect(applied).toMatchObject({
         version: 1,
         entitlements,
@@ -217,6 +232,11 @@ describe('sudo-entitlements-admin API integration tests', () => {
       )
       expect(consumption.consumption).toHaveLength(0)
       expect(consumption.entitlements).toEqual(applied)
+
+      const entitledUser = await sudoEntitlementsAdmin.removeEntitledUser(
+        externalId,
+      )
+      expect(entitledUser?.externalId).toBe(externalId)
     })
 
     it('should be able to apply entitlements set to a user and retrieve entitlements consumption', async () => {
@@ -239,6 +259,8 @@ describe('sudo-entitlements-admin API integration tests', () => {
         externalId,
         name,
       )
+
+      externalIds.push(externalId)
 
       expect(applied).toMatchObject({
         version: 1 + added.version / 100000,
@@ -352,6 +374,8 @@ describe('sudo-entitlements-admin API integration tests', () => {
             name,
             now,
           )
+
+          externalIds.push(externalId)
 
           expect(applied).toMatchObject({
             version: 1 + added.version / 100000,

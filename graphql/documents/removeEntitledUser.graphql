@@ -1,0 +1,5 @@
+mutation RemoveEntitledUser($input: RemoveEntitledUserInput!) {
+  removeEntitledUser(input: $input) {
+    externalId
+  }
+}

@@ -54,6 +54,8 @@ import {
   RemoveEntitlementsSequenceDocument,
   ApplyEntitlementsSequenceToUserMutation,
   ApplyEntitlementsSequenceToUserDocument,
+  RemoveEntitledUserMutation,
+  RemoveEntitledUserDocument,
 } from '../gen/graphqlTypes'
 import { AdminApiClient, AdminConsoleProject } from './adminApiClient'
 
@@ -896,6 +898,71 @@ describe('AdminApiClient test suite', () => {
           entitlementsSequenceName: entitlementsSequence.name,
         }),
       ).rejects.toThrow(new EntitlementsSequenceNotFoundError())
+    })
+  })
+
+  describe('removeEntitledUser tests', () => {
+    it('should return results', async () => {
+      when(
+        mockClient.mutate<RemoveEntitledUserMutation>(anything()),
+      ).thenResolve({
+        data: { removeEntitledUser: { externalId: 'dummy_external_id' } },
+      })
+
+      await expect(
+        adminApiClient.removeEntitledUser({ externalId: 'dummy_external_id' }),
+      ).resolves.toEqual({ externalId: 'dummy_external_id' })
+
+      const [actualMutation] = capture(mockClient.mutate as any).first()
+      expect(actualMutation).toEqual({
+        mutation: RemoveEntitledUserDocument,
+        variables: { input: { externalId: 'dummy_external_id' } },
+        fetchPolicy: 'no-cache',
+      })
+      verify(mockClient.mutate(anything())).once()
+    })
+    it.each`
+      result
+      ${undefined}
+      ${null}
+    `('should return null for result $result', async ({ result }) => {
+      when(
+        mockClient.mutate<RemoveEntitledUserMutation>(anything()),
+      ).thenResolve({
+        data: { removeEntitledUser: result },
+      })
+
+      await expect(
+        adminApiClient.removeEntitledUser({ externalId: 'dummy_external_id' }),
+      ).resolves.toEqual(null)
+
+      const [actualMutation] = capture(mockClient.mutate as any).first()
+      expect(actualMutation).toEqual({
+        mutation: RemoveEntitledUserDocument,
+        variables: { input: { externalId: 'dummy_external_id' } },
+        fetchPolicy: 'no-cache',
+      })
+      verify(mockClient.mutate(anything())).once()
+    })
+
+    it('should throw a FatalError on no result', async () => {
+      when(
+        mockClient.mutate<RemoveEntitledUserMutation>(anything()),
+      ).thenResolve({
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.removeEntitledUser({ externalId: 'dummy_external_id' }),
+      ).rejects.toThrowErrorMatchingSnapshot()
+
+      const [actualMutation] = capture(mockClient.mutate as any).first()
+      expect(actualMutation).toEqual({
+        mutation: RemoveEntitledUserDocument,
+        variables: { input: { externalId: 'dummy_external_id' } },
+        fetchPolicy: 'no-cache',
+      })
+      verify(mockClient.mutate(anything())).once()
     })
   })
 })

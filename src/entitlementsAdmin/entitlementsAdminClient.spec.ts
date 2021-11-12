@@ -825,4 +825,55 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       ).once()
     })
   })
+
+  describe('removeEntitledUser tests', () => {
+    it('should return entitled user', async () => {
+      when(mockAdminApiClient.removeEntitledUser(anything())).thenResolve({
+        externalId: 'dummy_external_id',
+      })
+      await expect(
+        sudoEntitlementsAdminClient.removeEntitledUser('dummy_external_id'),
+      ).resolves.toEqual({ externalId: 'dummy_external_id' })
+
+      const [actualInput] = capture(
+        mockAdminApiClient.removeEntitledUser,
+      ).first()
+      expect(actualInput).toEqual({ externalId: 'dummy_external_id' })
+      verify(mockAdminApiClient.removeEntitledUser(anything())).once()
+    })
+
+    it.each`
+      result
+      ${undefined}
+      ${null}
+    `('should return undefined for result $result', async ({ result }) => {
+      when(mockAdminApiClient.removeEntitledUser(anything())).thenResolve(
+        result,
+      )
+      await expect(
+        sudoEntitlementsAdminClient.removeEntitledUser('dummy_external_id'),
+      ).resolves.toBeUndefined()
+
+      const [actualInput] = capture(
+        mockAdminApiClient.removeEntitledUser,
+      ).first()
+      expect(actualInput).toEqual({ externalId: 'dummy_external_id' })
+      verify(mockAdminApiClient.removeEntitledUser(anything())).once()
+    })
+
+    it.each`
+      test                          | reject                  | message
+      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
+      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
+      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
+    `('should map a $test error', async ({ reject, message }) => {
+      when(mockAdminApiClient.removeEntitledUser(anything())).thenReject(reject)
+
+      await expect(
+        sudoEntitlementsAdminClient.removeEntitledUser('dummy_external_id'),
+      ).rejects.toThrowError(new RegExp(message))
+
+      verify(mockAdminApiClient.removeEntitledUser(anything())).once()
+    })
+  })
 })

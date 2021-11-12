@@ -36,7 +36,7 @@ type EntitlementsSetsConnection @aws_api_key @aws_iam {
 type EntitlementsSequenceTransition @aws_api_key @aws_iam {
   # Name of entitlements set
   entitlementsSetName: String!
-  
+
   # ISO8601 period string - if not specified then this transition
   # is the final state for all users on the sequence.
   duration: String
@@ -53,12 +53,12 @@ type EntitlementsSequence @aws_api_key @aws_iam {
   # Time of initial creation of an entitlements sequence in milliseconds
   # since epoch. Number is integral, float type provides sufficient
   # precision.
-  createdAtEpochMs: Float!,
+  createdAtEpochMs: Float!
 
   # Time of most recent update of an entitlements sequence in milliseconds
   # since epoch. Number is integral, float type provides sufficient
   # precision.
-  updatedAtEpochMs: Float!,
+  updatedAtEpochMs: Float!
 
   # Version of the entitlements sequence. Incremented each time an update is made.
   version: Int!
@@ -124,6 +124,11 @@ type ExternalEntitlementsConsumption @aws_api_key @aws_iam {
   entitlements: ExternalUserEntitlements!
   # User's entitlement consumption
   consumption: [EntitlementConsumption!]!
+}
+
+# Entitled user.
+type EntitledUser {
+  externalId: String!
 }
 
 # Input representing an entitlement
@@ -195,7 +200,7 @@ input GetEntitlementsForUserInput {
 input EntitlementsSequenceTransitionInput {
   # Name of entitlements set
   entitlementsSetName: String!
-  
+
   # ISO8601 period string - if not specified then this transition
   # is the final state for all users on the sequence.
   duration: String
@@ -235,6 +240,11 @@ input RemoveEntitlementsSequenceInput {
   name: String!
 }
 
+# Input for the removeEntitledUser mutation
+input RemoveEntitledUserInput {
+  externalId: String!
+}
+
 type Query {
   # Gets an entitlement set.
   getEntitlementsSet(input: GetEntitlementsSetInput!): EntitlementsSet
@@ -247,14 +257,14 @@ type Query {
     @aws_iam
 
   # Gets an entitlement sequence.
-  getEntitlementsSequence(input: GetEntitlementsSequenceInput!): EntitlementsSequence
-    @aws_api_key
-    @aws_iam
+  getEntitlementsSequence(
+    input: GetEntitlementsSequenceInput!
+  ): EntitlementsSequence @aws_api_key @aws_iam
 
   # Retrieves all entitlements sequences.
-  listEntitlementsSequences(nextToken: String): EntitlementsSequencesConnection!
-    @aws_api_key
-    @aws_iam
+  listEntitlementsSequences(
+    nextToken: String
+  ): EntitlementsSequencesConnection! @aws_api_key @aws_iam
 
   # Retrieve effective entitlements for a given external user.
   getEntitlementsForUser(
@@ -280,20 +290,20 @@ type Mutation {
     @aws_iam
 
   # Adds an entitlement sequence
-  addEntitlementsSequence(input: AddEntitlementsSequenceInput!): EntitlementsSequence!
-    @aws_api_key
-    @aws_iam
+  addEntitlementsSequence(
+    input: AddEntitlementsSequenceInput!
+  ): EntitlementsSequence! @aws_api_key @aws_iam
 
   # Replace the definition of an entitlements sequence
-  setEntitlementsSequence(input: SetEntitlementsSequenceInput!): EntitlementsSequence!
-    @aws_api_key
-    @aws_iam
+  setEntitlementsSequence(
+    input: SetEntitlementsSequenceInput!
+  ): EntitlementsSequence! @aws_api_key @aws_iam
 
   # Remove an entitlements sequence. Any users configured against this entitlements
   # sequence will become unentitled.
-  removeEntitlementsSequence(input: RemoveEntitlementsSequenceInput!): EntitlementsSequence
-    @aws_api_key
-    @aws_iam
+  removeEntitlementsSequence(
+    input: RemoveEntitlementsSequenceInput!
+  ): EntitlementsSequence @aws_api_key @aws_iam
 
   # Apply an entitlement set with the specified name to a user.
   applyEntitlementsSetToUser(
@@ -309,4 +319,8 @@ type Mutation {
   applyEntitlementsToUser(
     input: ApplyEntitlementsToUserInput!
   ): ExternalUserEntitlements! @aws_api_key @aws_iam
+
+  # Remove an entitled user. Entitlements and consumption records related
+  # to the specified user will be removed.
+  removeEntitledUser(input: RemoveEntitledUserInput!): EntitledUser
 }

@@ -27,6 +27,7 @@ import {
   ApplyEntitlementsToUserDocument,
   ApplyEntitlementsToUserInput,
   ApplyEntitlementsToUserMutation,
+  EntitledUser,
   EntitlementsSequence,
   EntitlementsSequencesConnection,
   EntitlementsSet,
@@ -46,6 +47,9 @@ import {
   ListEntitlementsSequencesQuery,
   ListEntitlementsSetsDocument,
   ListEntitlementsSetsQuery,
+  RemoveEntitledUserDocument,
+  RemoveEntitledUserInput,
+  RemoveEntitledUserMutation,
   RemoveEntitlementsSequenceDocument,
   RemoveEntitlementsSequenceInput,
   RemoveEntitlementsSequenceMutation,
@@ -474,6 +478,27 @@ export class AdminApiClient {
       return result.data.applyEntitlementsToUser
     } else {
       throw new FatalError('applyEntitlementsToUser did not return any result.')
+    }
+  }
+
+  public async removeEntitledUser(
+    input: RemoveEntitledUserInput,
+  ): Promise<EntitledUser | null> {
+    const result = await this.client.mutate<RemoveEntitledUserMutation>({
+      mutation: RemoveEntitledUserDocument,
+      variables: { input },
+      fetchPolicy: mutationFetchPolicy,
+    })
+
+    const error = result.errors?.[0]
+    if (error) {
+      throw this.graphQLErrorsToClientError(error)
+    }
+
+    if (result.data) {
+      return result.data.removeEntitledUser ?? null
+    } else {
+      throw new FatalError('removeEntitledUser did not return any result.')
     }
   }
 }
