@@ -420,7 +420,7 @@ export interface SudoEntitlementsAdminClient {
   ): Promise<ExternalUserEntitlements>
 
   /**
-   * Get an entiltements sequence
+   * Get an entitlements sequence
    *
    * @param name Name of the entitlements sequence to return
    *
@@ -452,7 +452,7 @@ export interface SudoEntitlementsAdminClient {
    * @returns The created entitlements sequence
    *
    * @throws {@link InvalidArgumentError}
-   *  - if the specifried entitlements sequence name is invalid
+   *  - if the specified entitlements sequence name is invalid
    */
   addEntitlementsSequence(
     newEntitlementsSequence: Omit<
@@ -469,7 +469,7 @@ export interface SudoEntitlementsAdminClient {
    * @returns The updated entitlements sequence
    *
    * @throws {@link InvalidArgumentError}
-   *  - if the specifried entitlements sequence name is invalid
+   *  - if the specified entitlements sequence name is invalid
    */
   setEntitlementsSequence(
     newEntitlementsSequence: Omit<
