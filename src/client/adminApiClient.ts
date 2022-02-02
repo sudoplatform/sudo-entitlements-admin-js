@@ -1,15 +1,17 @@
 import {
   AppSyncError,
+  AppSyncNetworkError,
   ConfigurationManager,
-  DecodeError,
   DefaultConfigurationManager,
-  IllegalArgumentError,
-  ServiceError,
+  mapGraphQLToClientError,
+  mapNetworkErrorToClientError,
   UnknownGraphQLError,
 } from '@sudoplatform/sudo-common'
 import { NormalizedCacheObject } from 'apollo-cache-inmemory'
+import { ApolloError } from 'apollo-client'
 import AWSAppSyncClient, { AUTH_TYPE } from 'aws-appsync'
 import { AuthOptions } from 'aws-appsync-auth-link'
+import { GraphQLError } from 'graphql'
 import * as t from 'io-ts'
 import {
   AddEntitlementsSequenceDocument,
@@ -153,352 +155,460 @@ export class AdminApiClient {
       })
   }
 
-  private graphQLErrorsToClientError(error: AppSyncError): Error {
-    if (error.errorType === 'sudoplatform.ServiceError') {
-      return new ServiceError(error.message)
-    } else if (error.errorType === 'sudoplatform.DecodingError') {
-      return new DecodeError()
-    } else if (error.errorType === 'sudoplatform.InvalidArgumentError') {
-      return new IllegalArgumentError()
-    } else if (
-      error.errorType === 'sudoplatform.entitlements.InvalidEntitlementsError'
-    ) {
-      return new InvalidEntitlementsError()
-    } else if (
-      error.errorType === 'sudoplatform.entitlements.EntitlementsSetInUse'
-    ) {
-      return new EntitlementsSetInUse()
-    } else if (
-      error.errorType ===
-      'sudoplatform.entitlements.EntitlementsSetNotFoundError'
-    ) {
-      return new EntitlementsSetNotFoundError()
-    } else if (
-      error.errorType ===
-      'sudoplatform.entitlements.EntitlementsSetAlreadyExistsError'
-    ) {
-      return new EntitlementsSetAlreadyExistsError()
-    } else if (
-      error.errorType ===
-      'sudoplatform.entitlements.EntitlementsSequenceAlreadyExistsError'
-    ) {
-      return new EntitlementsSequenceAlreadyExistsError()
-    } else if (
-      error.errorType ===
-      'sudoplatform.entitlements.EntitlementsSequenceNotFoundError'
-    ) {
-      return new EntitlementsSequenceNotFoundError()
-    } else if (
-      error.errorType ===
-      'sudoplatform.entitlements.EntitlementsSetImmutableError'
-    ) {
-      return new EntitlementsSetImmutableError()
+  private graphQLErrorToClientError(error: AppSyncError): Error {
+    if (error.errorType?.startsWith('sudoplatform.entitlements.')) {
+      const code = error.errorType.replace('sudoplatform.entitlements.', '')
+      switch (code) {
+        case 'InvalidEntitlementsError': {
+          return new InvalidEntitlementsError()
+        }
+        case 'EntitlementsSetInUse': {
+          return new EntitlementsSetInUse()
+        }
+        case 'EntitlementsSetNotFoundError': {
+          return new EntitlementsSetNotFoundError()
+        }
+        case 'EntitlementsSetAlreadyExistsError': {
+          return new EntitlementsSetAlreadyExistsError()
+        }
+        case 'EntitlementsSequenceAlreadyExistsError': {
+          return new EntitlementsSequenceAlreadyExistsError()
+        }
+        case 'EntitlementsSequenceNotFoundError': {
+          return new EntitlementsSequenceNotFoundError()
+        }
+        case 'EntitlementsSetImmutableError': {
+          return new EntitlementsSetImmutableError()
+        }
+      }
+    }
+
+    return mapGraphQLToClientError(error)
+  }
+
+  private mapAndThrowError(
+    returnedError?: AppSyncError,
+    thrownError?: Error,
+  ): never {
+    if (thrownError) {
+      const appSyncNetworkError = thrownError as AppSyncNetworkError
+      if (appSyncNetworkError.networkError) {
+        throw mapNetworkErrorToClientError(appSyncNetworkError)
+      }
+      const apolloError = thrownError as ApolloError
+      if (apolloError.graphQLErrors?.[0]) {
+        returnedError = apolloError.graphQLErrors?.[0]
+      } else if ((thrownError as AppSyncError).errorType) {
+        returnedError = thrownError as AppSyncError
+      } else {
+        throw new UnknownGraphQLError(thrownError)
+      }
+    }
+    if (returnedError) {
+      throw this.graphQLErrorToClientError(returnedError)
     } else {
-      return new UnknownGraphQLError(error)
+      throw new FatalError('no error to map')
     }
   }
 
   public async getEntitlementsSet(
     input: GetEntitlementsSetInput,
   ): Promise<EntitlementsSet | null> {
-    const result = await this.client.query<GetEntitlementsSetQuery>({
-      query: GetEntitlementsSetDocument,
-      variables: { input },
-      fetchPolicy: queryFetchPolicy,
-    })
-
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.query<GetEntitlementsSetQuery>({
+        query: GetEntitlementsSetDocument,
+        variables: { input },
+        fetchPolicy: queryFetchPolicy,
+      })
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        return result.data.getEntitlementsSet ?? null
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    return result.data.getEntitlementsSet ?? null
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async listEntitlementsSets(
     nextToken?: string,
   ): Promise<EntitlementsSetsConnection> {
-    const result = await this.client.query<ListEntitlementsSetsQuery>({
-      query: ListEntitlementsSetsDocument,
-      variables: { nextToken: nextToken ?? null },
-      fetchPolicy: queryFetchPolicy,
-    })
+    let graphqlError: GraphQLError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.query<ListEntitlementsSetsQuery>({
+        query: ListEntitlementsSetsDocument,
+        variables: { nextToken: nextToken ?? null },
+        fetchPolicy: queryFetchPolicy,
+      })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        return result.data.listEntitlementsSets
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    return result.data.listEntitlementsSets
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async getEntitlementsForUser(
     input: GetEntitlementsForUserInput,
   ): Promise<ExternalEntitlementsConsumption> {
-    const result = await this.client.query<GetEntitlementsForUserQuery>({
-      query: GetEntitlementsForUserDocument,
-      variables: { input },
-      fetchPolicy: queryFetchPolicy,
-    })
+    let graphqlError: GraphQLError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.query<GetEntitlementsForUserQuery>({
+        query: GetEntitlementsForUserDocument,
+        variables: { input },
+        fetchPolicy: queryFetchPolicy,
+      })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        return result.data.getEntitlementsForUser
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    return result.data.getEntitlementsForUser
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async addEntitlementsSet(
     input: AddEntitlementsSetInput,
   ): Promise<EntitlementsSet> {
-    const result = await this.client.mutate<AddEntitlementsSetMutation>({
-      mutation: AddEntitlementsSetDocument,
-      variables: { input },
-      fetchPolicy: mutationFetchPolicy,
-    })
+    let graphqlError: GraphQLError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.mutate<AddEntitlementsSetMutation>({
+        mutation: AddEntitlementsSetDocument,
+        variables: { input },
+        fetchPolicy: mutationFetchPolicy,
+      })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.addEntitlementsSet
+        } else {
+          throw new FatalError('addEntitlementsSet did not return any result.')
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    if (result.data) {
-      return result.data.addEntitlementsSet
-    } else {
-      throw new FatalError('addEntitlementsSet did not return any result.')
-    }
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async setEntitlementsSet(
     input: SetEntitlementsSetInput,
   ): Promise<EntitlementsSet> {
-    const result = await this.client.mutate<SetEntitlementsSetMutation>({
-      mutation: SetEntitlementsSetDocument,
-      variables: { input },
-      fetchPolicy: mutationFetchPolicy,
-    })
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.mutate<SetEntitlementsSetMutation>({
+        mutation: SetEntitlementsSetDocument,
+        variables: { input },
+        fetchPolicy: mutationFetchPolicy,
+      })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.setEntitlementsSet
+        } else {
+          throw new FatalError('setEntitlementsSet did not return any result.')
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    if (result.data) {
-      return result.data.setEntitlementsSet
-    } else {
-      throw new FatalError('setEntitlementsSet did not return any result.')
-    }
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async removeEntitlementsSet(
     input: RemoveEntitlementsSetInput,
   ): Promise<EntitlementsSet | null> {
-    const result = await this.client.mutate<RemoveEntitlementsSetMutation>({
-      mutation: RemoveEntitlementsSetDocument,
-      variables: { input },
-      fetchPolicy: mutationFetchPolicy,
-    })
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.mutate<RemoveEntitlementsSetMutation>({
+        mutation: RemoveEntitlementsSetDocument,
+        variables: { input },
+        fetchPolicy: mutationFetchPolicy,
+      })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.removeEntitlementsSet ?? null
+        } else {
+          throw new FatalError(
+            'removeEntitlementsSet did not return any result.',
+          )
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    if (result.data) {
-      return result.data.removeEntitlementsSet ?? null
-    } else {
-      throw new FatalError('removeEntitlementsSet did not return any result.')
-    }
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async getEntitlementsSequence(
     input: GetEntitlementsSequenceInput,
   ): Promise<EntitlementsSequence | null> {
-    const result = await this.client.query<GetEntitlementsSequenceQuery>({
-      query: GetEntitlementsSequenceDocument,
-      variables: { input },
-      fetchPolicy: queryFetchPolicy,
-    })
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.query<GetEntitlementsSequenceQuery>({
+        query: GetEntitlementsSequenceDocument,
+        variables: { input },
+        fetchPolicy: queryFetchPolicy,
+      })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        return result.data.getEntitlementsSequence ?? null
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    return result.data.getEntitlementsSequence ?? null
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async listEntitlementsSequences(
     nextToken?: string,
   ): Promise<EntitlementsSequencesConnection> {
-    const result = await this.client.query<ListEntitlementsSequencesQuery>({
-      query: ListEntitlementsSequencesDocument,
-      variables: { nextToken: nextToken ?? null },
-      fetchPolicy: queryFetchPolicy,
-    })
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.query<ListEntitlementsSequencesQuery>({
+        query: ListEntitlementsSequencesDocument,
+        variables: { nextToken: nextToken ?? null },
+        fetchPolicy: queryFetchPolicy,
+      })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        return result.data.listEntitlementsSequences
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    return result.data.listEntitlementsSequences
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async addEntitlementsSequence(
     input: AddEntitlementsSequenceInput,
   ): Promise<EntitlementsSequence> {
-    const result = await this.client.mutate<AddEntitlementsSequenceMutation>({
-      mutation: AddEntitlementsSequenceDocument,
-      variables: { input },
-      fetchPolicy: mutationFetchPolicy,
-    })
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.mutate<AddEntitlementsSequenceMutation>({
+        mutation: AddEntitlementsSequenceDocument,
+        variables: { input },
+        fetchPolicy: mutationFetchPolicy,
+      })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.addEntitlementsSequence
+        } else {
+          throw new FatalError(
+            'addEntitlementsSequence did not return any result.',
+          )
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    if (result.data) {
-      return result.data.addEntitlementsSequence
-    } else {
-      throw new FatalError('addEntitlementsSequence did not return any result.')
-    }
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async setEntitlementsSequence(
     input: SetEntitlementsSequenceInput,
   ): Promise<EntitlementsSequence> {
-    const result = await this.client.mutate<SetEntitlementsSequenceMutation>({
-      mutation: SetEntitlementsSequenceDocument,
-      variables: { input },
-      fetchPolicy: mutationFetchPolicy,
-    })
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.mutate<SetEntitlementsSequenceMutation>({
+        mutation: SetEntitlementsSequenceDocument,
+        variables: { input },
+        fetchPolicy: mutationFetchPolicy,
+      })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.setEntitlementsSequence
+        } else {
+          throw new FatalError(
+            'setEntitlementsSequence did not return any result.',
+          )
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    if (result.data) {
-      return result.data.setEntitlementsSequence
-    } else {
-      throw new FatalError('setEntitlementsSequence did not return any result.')
-    }
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async removeEntitlementsSequence(
     input: RemoveEntitlementsSequenceInput,
   ): Promise<EntitlementsSequence | null> {
-    const result = await this.client.mutate<RemoveEntitlementsSequenceMutation>(
-      {
-        mutation: RemoveEntitlementsSequenceDocument,
-        variables: { input },
-        fetchPolicy: mutationFetchPolicy,
-      },
-    )
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result =
+        await this.client.mutate<RemoveEntitlementsSequenceMutation>({
+          mutation: RemoveEntitlementsSequenceDocument,
+          variables: { input },
+          fetchPolicy: mutationFetchPolicy,
+        })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.removeEntitlementsSequence ?? null
+        } else {
+          throw new FatalError(
+            'removeEntitlementsSequence did not return any result.',
+          )
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    if (result.data) {
-      return result.data.removeEntitlementsSequence ?? null
-    } else {
-      throw new FatalError(
-        'removeEntitlementsSequence did not return any result.',
-      )
-    }
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async applyEntitlementsSequenceToUser(
     input: ApplyEntitlementsSequenceToUserInput,
   ): Promise<ExternalUserEntitlements> {
-    const result =
-      await this.client.mutate<ApplyEntitlementsSequenceToUserMutation>({
-        mutation: ApplyEntitlementsSequenceToUserDocument,
-        variables: { input },
-        fetchPolicy: mutationFetchPolicy,
-      })
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result =
+        await this.client.mutate<ApplyEntitlementsSequenceToUserMutation>({
+          mutation: ApplyEntitlementsSequenceToUserDocument,
+          variables: { input },
+          fetchPolicy: mutationFetchPolicy,
+        })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.applyEntitlementsSequenceToUser
+        } else {
+          throw new FatalError(
+            'applyEntitlementsSequenceToUser unexpectedly falsy',
+          )
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    if (result.data) {
-      return result.data.applyEntitlementsSequenceToUser
-    } else {
-      throw new FatalError('applyEntitlementsSequenceToUser unexpectedly falsy')
-    }
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async applyEntitlementsSetToUser(
     input: ApplyEntitlementsSetToUserInput,
   ): Promise<ExternalUserEntitlements> {
-    const result = await this.client.mutate<ApplyEntitlementsSetToUserMutation>(
-      {
-        mutation: ApplyEntitlementsSetToUserDocument,
-        variables: { input },
-        fetchPolicy: mutationFetchPolicy,
-      },
-    )
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result =
+        await this.client.mutate<ApplyEntitlementsSetToUserMutation>({
+          mutation: ApplyEntitlementsSetToUserDocument,
+          variables: { input },
+          fetchPolicy: mutationFetchPolicy,
+        })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.applyEntitlementsSetToUser
+        } else {
+          throw new FatalError(
+            'applyEntitlementsSetToUser did not return any result.',
+          )
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    if (result.data) {
-      return result.data.applyEntitlementsSetToUser
-    } else {
-      throw new FatalError(
-        'applyEntitlementsSetToUser did not return any result.',
-      )
-    }
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async applyEntitlementsToUser(
     input: ApplyEntitlementsToUserInput,
   ): Promise<ExternalUserEntitlements> {
-    const result = await this.client.mutate<ApplyEntitlementsToUserMutation>({
-      mutation: ApplyEntitlementsToUserDocument,
-      variables: { input },
-      fetchPolicy: mutationFetchPolicy,
-    })
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.mutate<ApplyEntitlementsToUserMutation>({
+        mutation: ApplyEntitlementsToUserDocument,
+        variables: { input },
+        fetchPolicy: mutationFetchPolicy,
+      })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.applyEntitlementsToUser
+        } else {
+          throw new FatalError(
+            'applyEntitlementsToUser did not return any result.',
+          )
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    if (result.data) {
-      return result.data.applyEntitlementsToUser
-    } else {
-      throw new FatalError('applyEntitlementsToUser did not return any result.')
-    }
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 
   public async removeEntitledUser(
     input: RemoveEntitledUserInput,
   ): Promise<EntitledUser | null> {
-    const result = await this.client.mutate<RemoveEntitledUserMutation>({
-      mutation: RemoveEntitledUserDocument,
-      variables: { input },
-      fetchPolicy: mutationFetchPolicy,
-    })
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.mutate<RemoveEntitledUserMutation>({
+        mutation: RemoveEntitledUserDocument,
+        variables: { input },
+        fetchPolicy: mutationFetchPolicy,
+      })
 
-    const error = result.errors?.[0]
-    if (error) {
-      throw this.graphQLErrorsToClientError(error)
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.removeEntitledUser ?? null
+        } else {
+          throw new FatalError('removeEntitledUser did not return any result.')
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
     }
 
-    if (result.data) {
-      return result.data.removeEntitledUser ?? null
-    } else {
-      throw new FatalError('removeEntitledUser did not return any result.')
-    }
+    this.mapAndThrowError(graphqlError, thrownError)
   }
 }

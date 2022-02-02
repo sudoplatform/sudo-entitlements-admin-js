@@ -27,33 +27,6 @@ import {
   ExternalUserEntitlements,
 } from './entitlementsAdminClient'
 
-class TestError extends Error {
-  public readonly graphQLErrors?: { errorType: string }[]
-  public readonly graphQLErrorType?: string
-  public readonly nonGraphQLError?: string
-  public constructor(
-    args: {
-      graphQLErrorType?: string
-      nonGraphQLError?: string
-    } = {},
-  ) {
-    super(args.graphQLErrorType ? 'Custom GraphQL error' : args.nonGraphQLError)
-    if (args.graphQLErrorType) {
-      this.graphQLErrors = [{ errorType: args.graphQLErrorType }]
-    }
-    this.graphQLErrorType = args.graphQLErrorType
-    this.nonGraphQLError = args.nonGraphQLError
-  }
-}
-
-const sudoPlatformError = new TestError({
-  graphQLErrorType: 'sudoplatform.test.SomeError',
-})
-const nonSudoPlatformError = new TestError({
-  graphQLErrorType: 'some.non.sudoplatform.Error',
-})
-const nonGraphQLError = new TestError({ nonGraphQLError: 'Other error' })
-
 describe('SudoEntitlementsAdminClient test suite', () => {
   const apiKey = 'admin-api-key'
   const mockAdminApiClient = mock<AdminApiClient>()
@@ -134,23 +107,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       expect(actualInput).toEqual({ externalId })
       verify(mockAdminApiClient.getEntitlementsForUser(anything())).once()
     })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.getEntitlementsForUser(anything())).thenReject(
-        reject,
-      )
-
-      await expect(
-        sudoEntitlementsAdminClient.getEntitlementsForUser(externalId),
-      ).rejects.toThrowError(new RegExp(message))
-
-      verify(mockAdminApiClient.getEntitlementsForUser(anything())).once()
-    })
   })
 
   describe('getEntitlementsSet tests', () => {
@@ -187,21 +143,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       expect(actualInput).toEqual({ name: entitlementsSet.name })
       verify(mockAdminApiClient.getEntitlementsSet(anything())).once()
     })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.getEntitlementsSet(anything())).thenReject(reject)
-
-      await expect(
-        sudoEntitlementsAdminClient.getEntitlementsSet(entitlementsSet.name),
-      ).rejects.toThrowError(new RegExp(message))
-
-      verify(mockAdminApiClient.getEntitlementsSet(anything())).once()
-    })
   })
 
   describe('listEntitlementsSets tests', () => {
@@ -220,6 +161,7 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       expect(actualNextToken).toBeUndefined()
       verify(mockAdminApiClient.listEntitlementsSets(anything())).once()
     })
+
     it('should return entitlements for subsequent call', async () => {
       const nextToken = 'next-token'
       when(mockAdminApiClient.listEntitlementsSets(anything())).thenResolve({
@@ -233,23 +175,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
         mockAdminApiClient.listEntitlementsSets,
       ).first()
       expect(actualNextToken).toEqual(nextToken)
-      verify(mockAdminApiClient.listEntitlementsSets(anything())).once()
-    })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.listEntitlementsSets(anything())).thenReject(
-        reject,
-      )
-
-      await expect(
-        sudoEntitlementsAdminClient.listEntitlementsSets(),
-      ).rejects.toThrowError(new RegExp(message))
-
       verify(mockAdminApiClient.listEntitlementsSets(anything())).once()
     })
   })
@@ -277,24 +202,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       })
       verify(mockAdminApiClient.addEntitlementsSet(anything())).once()
     })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.addEntitlementsSet(anything())).thenReject(reject)
-
-      await expect(
-        sudoEntitlementsAdminClient.addEntitlementsSet({
-          name: entitlementsSet.name,
-          entitlements: entitlementsSet.entitlements,
-        }),
-      ).rejects.toThrowError(new RegExp(message))
-
-      verify(mockAdminApiClient.addEntitlementsSet(anything())).once()
-    })
   })
 
   describe('setEntitlementsSet tests', () => {
@@ -318,24 +225,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
           EntitlementTransformer.toGraphQL,
         ),
       })
-      verify(mockAdminApiClient.setEntitlementsSet(anything())).once()
-    })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.setEntitlementsSet(anything())).thenReject(reject)
-
-      await expect(
-        sudoEntitlementsAdminClient.setEntitlementsSet({
-          name: entitlementsSet.name,
-          entitlements: entitlementsSet.entitlements,
-        }),
-      ).rejects.toThrowError(new RegExp(message))
-
       verify(mockAdminApiClient.setEntitlementsSet(anything())).once()
     })
   })
@@ -374,23 +263,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       expect(actualInput).toEqual({ name: entitlementsSet.name })
       verify(mockAdminApiClient.removeEntitlementsSet(anything())).once()
     })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.removeEntitlementsSet(anything())).thenReject(
-        reject,
-      )
-
-      await expect(
-        sudoEntitlementsAdminClient.removeEntitlementsSet(entitlementsSet.name),
-      ).rejects.toThrowError(new RegExp(message))
-
-      verify(mockAdminApiClient.removeEntitlementsSet(anything())).once()
-    })
   })
 
   describe('applyEntitlementsSetToUser tests', () => {
@@ -417,26 +289,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       })
       verify(mockAdminApiClient.applyEntitlementsSetToUser(anything())).once()
     })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(
-        mockAdminApiClient.applyEntitlementsSetToUser(anything()),
-      ).thenReject(reject)
-
-      await expect(
-        sudoEntitlementsAdminClient.applyEntitlementsSetToUser(
-          externalId,
-          entitlementsSet.name,
-        ),
-      ).rejects.toThrowError(new RegExp(message))
-
-      verify(mockAdminApiClient.applyEntitlementsSetToUser(anything())).once()
-    })
   })
 
   describe('applyEntitlementsToUser tests', () => {
@@ -461,26 +313,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
           EntitlementTransformer.toGraphQL,
         ),
       })
-      verify(mockAdminApiClient.applyEntitlementsToUser(anything())).once()
-    })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.applyEntitlementsToUser(anything())).thenReject(
-        reject,
-      )
-
-      await expect(
-        sudoEntitlementsAdminClient.applyEntitlementsToUser(
-          externalId,
-          entitlementsSet.entitlements,
-        ),
-      ).rejects.toThrowError(new RegExp(message))
-
       verify(mockAdminApiClient.applyEntitlementsToUser(anything())).once()
     })
   })
@@ -523,25 +355,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       expect(actualInput).toEqual({ name: entitlementsSequence.name })
       verify(mockAdminApiClient.getEntitlementsSequence(anything())).once()
     })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.getEntitlementsSequence(anything())).thenReject(
-        reject,
-      )
-
-      await expect(
-        sudoEntitlementsAdminClient.getEntitlementsSequence(
-          entitlementsSequence.name,
-        ),
-      ).rejects.toThrowError(new RegExp(message))
-
-      verify(mockAdminApiClient.getEntitlementsSequence(anything())).once()
-    })
   })
 
   describe('listEntitlementsSequences tests', () => {
@@ -564,6 +377,7 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       expect(actualNextToken).toBeUndefined()
       verify(mockAdminApiClient.listEntitlementsSequences(anything())).once()
     })
+
     it('should return entitlements sequences for subsequent call', async () => {
       const nextToken = 'next-token'
       when(
@@ -581,23 +395,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
         mockAdminApiClient.listEntitlementsSequences,
       ).first()
       expect(actualNextToken).toEqual(nextToken)
-      verify(mockAdminApiClient.listEntitlementsSequences(anything())).once()
-    })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.listEntitlementsSequences(anything())).thenReject(
-        reject,
-      )
-
-      await expect(
-        sudoEntitlementsAdminClient.listEntitlementsSequences(),
-      ).rejects.toThrowError(new RegExp(message))
-
       verify(mockAdminApiClient.listEntitlementsSequences(anything())).once()
     })
   })
@@ -627,27 +424,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       })
       verify(mockAdminApiClient.addEntitlementsSequence(anything())).once()
     })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.addEntitlementsSequence(anything())).thenReject(
-        reject,
-      )
-
-      await expect(
-        sudoEntitlementsAdminClient.addEntitlementsSequence({
-          name: entitlementsSequence.name,
-          description: entitlementsSequence.description,
-          transitions: entitlementsSequence.transitions,
-        }),
-      ).rejects.toThrowError(new RegExp(message))
-
-      verify(mockAdminApiClient.addEntitlementsSequence(anything())).once()
-    })
   })
 
   describe('setEntitlementsSequence tests', () => {
@@ -673,27 +449,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
           EntitlementsSequenceTransitionTransformer.toGraphQL,
         ),
       })
-      verify(mockAdminApiClient.setEntitlementsSequence(anything())).once()
-    })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.setEntitlementsSequence(anything())).thenReject(
-        reject,
-      )
-
-      await expect(
-        sudoEntitlementsAdminClient.setEntitlementsSequence({
-          name: entitlementsSet.name,
-          description: entitlementsSequence.description,
-          transitions: entitlementsSequence.transitions,
-        }),
-      ).rejects.toThrowError(new RegExp(message))
-
       verify(mockAdminApiClient.setEntitlementsSequence(anything())).once()
     })
   })
@@ -736,25 +491,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
         mockAdminApiClient.removeEntitlementsSequence,
       ).first()
       expect(actualInput).toEqual({ name: entitlementsSequence.name })
-      verify(mockAdminApiClient.removeEntitlementsSequence(anything())).once()
-    })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(
-        mockAdminApiClient.removeEntitlementsSequence(anything()),
-      ).thenReject(reject)
-
-      await expect(
-        sudoEntitlementsAdminClient.removeEntitlementsSequence(
-          entitlementsSet.name,
-        ),
-      ).rejects.toThrowError(new RegExp(message))
-
       verify(mockAdminApiClient.removeEntitlementsSequence(anything())).once()
     })
   })
@@ -802,28 +538,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
         ).once()
       },
     )
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(
-        mockAdminApiClient.applyEntitlementsSequenceToUser(anything()),
-      ).thenReject(reject)
-
-      await expect(
-        sudoEntitlementsAdminClient.applyEntitlementsSequenceToUser(
-          externalId,
-          entitlementsSet.name,
-        ),
-      ).rejects.toThrowError(new RegExp(message))
-
-      verify(
-        mockAdminApiClient.applyEntitlementsSequenceToUser(anything()),
-      ).once()
-    })
   })
 
   describe('removeEntitledUser tests', () => {
@@ -858,21 +572,6 @@ describe('SudoEntitlementsAdminClient test suite', () => {
         mockAdminApiClient.removeEntitledUser,
       ).first()
       expect(actualInput).toEqual({ externalId: 'dummy_external_id' })
-      verify(mockAdminApiClient.removeEntitledUser(anything())).once()
-    })
-
-    it.each`
-      test                          | reject                  | message
-      ${'sudoplatform GraphQL'}     | ${sudoPlatformError}    | ${sudoPlatformError.graphQLErrorType}
-      ${'non-sudoplatform GraphQL'} | ${nonSudoPlatformError} | ${'Custom GraphQL error'}
-      ${'non-GraphQL'}              | ${nonGraphQLError}      | ${nonGraphQLError.nonGraphQLError}
-    `('should map a $test error', async ({ reject, message }) => {
-      when(mockAdminApiClient.removeEntitledUser(anything())).thenReject(reject)
-
-      await expect(
-        sudoEntitlementsAdminClient.removeEntitledUser('dummy_external_id'),
-      ).rejects.toThrowError(new RegExp(message))
-
       verify(mockAdminApiClient.removeEntitledUser(anything())).once()
     })
   })

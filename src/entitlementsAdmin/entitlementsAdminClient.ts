@@ -1,6 +1,3 @@
-import { AppSyncError } from '@sudoplatform/sudo-common'
-import { ApolloError } from 'apollo-client'
-
 import { AdminApiClient } from '../client/adminApiClient'
 import { EntitlementsSequencesConnectionTransformer } from '../data/transformers/entitlementsSequencesConnectionTransformer'
 import { EntitlementsSequenceTransformer } from '../data/transformers/entitlementsSequenceTransformer'
@@ -541,164 +538,119 @@ export class DefaultSudoEntitlementsAdminClient
   }
 
   async getEntitlementsSet(name: string): Promise<EntitlementsSet | undefined> {
-    try {
-      const entitlements = await this.adminApiClient.getEntitlementsSet({
-        name,
-      })
-      if (!entitlements) {
-        return undefined
-      }
-      return EntitlementsSetTransformer.toClient(entitlements)
-    } catch (err) {
-      throw this.extractPlatformError(err)
+    const entitlements = await this.adminApiClient.getEntitlementsSet({
+      name,
+    })
+    if (!entitlements) {
+      return undefined
     }
+    return EntitlementsSetTransformer.toClient(entitlements)
   }
 
   async listEntitlementsSets(
     nextToken?: string,
   ): Promise<EntitlementsSetsConnection> {
-    try {
-      const entitlementsSetsConnection =
-        await this.adminApiClient.listEntitlementsSets(nextToken)
-      return EntitlementsSetsConnectionTransformer.toClient(
-        entitlementsSetsConnection,
-      )
-    } catch (err) {
-      throw this.extractPlatformError(err)
-    }
+    const entitlementsSetsConnection =
+      await this.adminApiClient.listEntitlementsSets(nextToken)
+    return EntitlementsSetsConnectionTransformer.toClient(
+      entitlementsSetsConnection,
+    )
   }
 
   async getEntitlementsForUser(
     externalId: string,
   ): Promise<ExternalEntitlementsConsumption> {
-    try {
-      const entitlementsConsumption =
-        await this.adminApiClient.getEntitlementsForUser({ externalId })
-      return ExternalEntitlementsConsumptionTransformer.toClient(
-        entitlementsConsumption,
-      )
-    } catch (err) {
-      throw this.extractPlatformError(err)
-    }
+    const entitlementsConsumption =
+      await this.adminApiClient.getEntitlementsForUser({ externalId })
+    return ExternalEntitlementsConsumptionTransformer.toClient(
+      entitlementsConsumption,
+    )
   }
 
   async addEntitlementsSet(
     newEntitlementsSet: NewEntitlementsSet,
   ): Promise<EntitlementsSet> {
-    try {
-      const input: AddEntitlementsSetInput = {
-        name: newEntitlementsSet.name,
-        description: newEntitlementsSet.description,
-        entitlements: newEntitlementsSet.entitlements.map(
-          EntitlementTransformer.toGraphQL,
-        ),
-      }
-      const entitlementsSet = await this.adminApiClient.addEntitlementsSet(
-        input,
-      )
-      return EntitlementsSetTransformer.toClient(entitlementsSet)
-    } catch (err) {
-      throw this.extractPlatformError(err)
+    const input: AddEntitlementsSetInput = {
+      name: newEntitlementsSet.name,
+      description: newEntitlementsSet.description,
+      entitlements: newEntitlementsSet.entitlements.map(
+        EntitlementTransformer.toGraphQL,
+      ),
     }
+    const entitlementsSet = await this.adminApiClient.addEntitlementsSet(input)
+    return EntitlementsSetTransformer.toClient(entitlementsSet)
   }
 
   async setEntitlementsSet(
     newEntitlementsSet: NewEntitlementsSet,
   ): Promise<EntitlementsSet> {
-    try {
-      const input: SetEntitlementsSetInput = {
-        name: newEntitlementsSet.name,
-        description: newEntitlementsSet.description,
-        entitlements: newEntitlementsSet.entitlements.map(
-          EntitlementTransformer.toGraphQL,
-        ),
-      }
-      const entitlementsSet = await this.adminApiClient.setEntitlementsSet(
-        input,
-      )
-      return EntitlementsSetTransformer.toClient(entitlementsSet)
-    } catch (err) {
-      throw this.extractPlatformError(err)
+    const input: SetEntitlementsSetInput = {
+      name: newEntitlementsSet.name,
+      description: newEntitlementsSet.description,
+      entitlements: newEntitlementsSet.entitlements.map(
+        EntitlementTransformer.toGraphQL,
+      ),
     }
+    const entitlementsSet = await this.adminApiClient.setEntitlementsSet(input)
+    return EntitlementsSetTransformer.toClient(entitlementsSet)
   }
 
   async removeEntitlementsSet(
     name: string,
   ): Promise<EntitlementsSet | undefined> {
-    try {
-      const removed = await this.adminApiClient.removeEntitlementsSet({
-        name,
-      })
-      if (!removed) {
-        return undefined
-      }
-      return EntitlementsSetTransformer.toClient(removed)
-    } catch (err) {
-      throw this.extractPlatformError(err)
+    const removed = await this.adminApiClient.removeEntitlementsSet({
+      name,
+    })
+    if (!removed) {
+      return undefined
     }
+    return EntitlementsSetTransformer.toClient(removed)
   }
 
   async applyEntitlementsSetToUser(
     externalId: string,
     entitlementsSetName: string,
   ): Promise<ExternalUserEntitlements> {
-    try {
-      const userEntitlements =
-        await this.adminApiClient.applyEntitlementsSetToUser({
-          externalId,
-          entitlementsSetName,
-        })
-      return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
-    } catch (err) {
-      throw this.extractPlatformError(err)
-    }
+    const userEntitlements =
+      await this.adminApiClient.applyEntitlementsSetToUser({
+        externalId,
+        entitlementsSetName,
+      })
+    return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
   }
 
   async applyEntitlementsToUser(
     externalId: string,
     entitlements: Entitlement[],
   ): Promise<ExternalUserEntitlements> {
-    try {
-      const userEntitlements =
-        await this.adminApiClient.applyEntitlementsToUser({
-          externalId,
-          entitlements: entitlements.map(EntitlementTransformer.toGraphQL),
-        })
-      return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
-    } catch (err) {
-      throw this.extractPlatformError(err)
-    }
+    const userEntitlements = await this.adminApiClient.applyEntitlementsToUser({
+      externalId,
+      entitlements: entitlements.map(EntitlementTransformer.toGraphQL),
+    })
+    return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
   }
 
   async getEntitlementsSequence(
     name: string,
   ): Promise<EntitlementsSequence | undefined> {
-    try {
-      const entitlementsSequence =
-        await this.adminApiClient.getEntitlementsSequence({
-          name,
-        })
-      if (!entitlementsSequence) {
-        return undefined
-      }
-      return EntitlementsSequenceTransformer.toClient(entitlementsSequence)
-    } catch (err) {
-      throw this.extractPlatformError(err)
+    const entitlementsSequence =
+      await this.adminApiClient.getEntitlementsSequence({
+        name,
+      })
+    if (!entitlementsSequence) {
+      return undefined
     }
+    return EntitlementsSequenceTransformer.toClient(entitlementsSequence)
   }
 
   async listEntitlementsSequences(
     nextToken?: string,
   ): Promise<EntitlementsSequencesConnection> {
-    try {
-      const entitlementsSequencesConnection =
-        await this.adminApiClient.listEntitlementsSequences(nextToken)
-      return EntitlementsSequencesConnectionTransformer.toClient(
-        entitlementsSequencesConnection,
-      )
-    } catch (err) {
-      throw this.extractPlatformError(err)
-    }
+    const entitlementsSequencesConnection =
+      await this.adminApiClient.listEntitlementsSequences(nextToken)
+    return EntitlementsSequencesConnectionTransformer.toClient(
+      entitlementsSequencesConnection,
+    )
   }
 
   async addEntitlementsSequence(
@@ -707,20 +659,16 @@ export class DefaultSudoEntitlementsAdminClient
       'createdAt' | 'updatedAt' | 'version'
     >,
   ): Promise<EntitlementsSequence> {
-    try {
-      const input: AddEntitlementsSequenceInput = {
-        name: newEntitlementsSequence.name,
-        description: newEntitlementsSequence.description,
-        transitions: newEntitlementsSequence.transitions.map(
-          EntitlementsSequenceTransitionTransformer.toGraphQL,
-        ),
-      }
-      const entitlementsSequence =
-        await this.adminApiClient.addEntitlementsSequence(input)
-      return EntitlementsSequenceTransformer.toClient(entitlementsSequence)
-    } catch (err) {
-      throw this.extractPlatformError(err)
+    const input: AddEntitlementsSequenceInput = {
+      name: newEntitlementsSequence.name,
+      description: newEntitlementsSequence.description,
+      transitions: newEntitlementsSequence.transitions.map(
+        EntitlementsSequenceTransitionTransformer.toGraphQL,
+      ),
     }
+    const entitlementsSequence =
+      await this.adminApiClient.addEntitlementsSequence(input)
+    return EntitlementsSequenceTransformer.toClient(entitlementsSequence)
   }
 
   async setEntitlementsSequence(
@@ -729,36 +677,28 @@ export class DefaultSudoEntitlementsAdminClient
       'createdAt' | 'updatedAt' | 'version'
     >,
   ): Promise<EntitlementsSequence> {
-    try {
-      const input: SetEntitlementsSequenceInput = {
-        name: newEntitlementsSequence.name,
-        description: newEntitlementsSequence.description,
-        transitions: newEntitlementsSequence.transitions.map(
-          EntitlementsSequenceTransitionTransformer.toGraphQL,
-        ),
-      }
-      const entitlementsSequence =
-        await this.adminApiClient.setEntitlementsSequence(input)
-      return EntitlementsSequenceTransformer.toClient(entitlementsSequence)
-    } catch (err) {
-      throw this.extractPlatformError(err)
+    const input: SetEntitlementsSequenceInput = {
+      name: newEntitlementsSequence.name,
+      description: newEntitlementsSequence.description,
+      transitions: newEntitlementsSequence.transitions.map(
+        EntitlementsSequenceTransitionTransformer.toGraphQL,
+      ),
     }
+    const entitlementsSequence =
+      await this.adminApiClient.setEntitlementsSequence(input)
+    return EntitlementsSequenceTransformer.toClient(entitlementsSequence)
   }
 
   async removeEntitlementsSequence(
     name: string,
   ): Promise<EntitlementsSequence | undefined> {
-    try {
-      const removed = await this.adminApiClient.removeEntitlementsSequence({
-        name,
-      })
-      if (!removed) {
-        return undefined
-      }
-      return EntitlementsSequenceTransformer.toClient(removed)
-    } catch (err) {
-      throw this.extractPlatformError(err)
+    const removed = await this.adminApiClient.removeEntitlementsSequence({
+      name,
+    })
+    if (!removed) {
+      return undefined
     }
+    return EntitlementsSequenceTransformer.toClient(removed)
   }
 
   async applyEntitlementsSequenceToUser(
@@ -766,41 +706,24 @@ export class DefaultSudoEntitlementsAdminClient
     entitlementsSequenceName: string,
     transitionsRelativeTo?: Date,
   ): Promise<ExternalUserEntitlements> {
-    try {
-      const userEntitlements =
-        await this.adminApiClient.applyEntitlementsSequenceToUser({
-          externalId,
-          entitlementsSequenceName,
-          transitionsRelativeToEpochMs: transitionsRelativeTo?.getTime(),
-        })
-      return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
-    } catch (err) {
-      throw this.extractPlatformError(err)
-    }
+    const userEntitlements =
+      await this.adminApiClient.applyEntitlementsSequenceToUser({
+        externalId,
+        entitlementsSequenceName,
+        transitionsRelativeToEpochMs: transitionsRelativeTo?.getTime(),
+      })
+    return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
   }
 
   async removeEntitledUser(
     externalId: string,
   ): Promise<EntitledUser | undefined> {
-    try {
-      const removed = await this.adminApiClient.removeEntitledUser({
-        externalId,
-      })
-      if (!removed) {
-        return undefined
-      }
-      return { externalId: removed.externalId }
-    } catch (err) {
-      throw this.extractPlatformError(err)
+    const removed = await this.adminApiClient.removeEntitledUser({
+      externalId,
+    })
+    if (!removed) {
+      return undefined
     }
-  }
-
-  private extractPlatformError(err: unknown): unknown {
-    const anyErr = err as ApolloError
-    const graphQLError = anyErr?.graphQLErrors?.[0] as AppSyncError | undefined
-    if (graphQLError?.errorType?.startsWith('sudoplatform.')) {
-      return new Error(graphQLError.errorType)
-    }
-    return err
+    return { externalId: removed.externalId }
   }
 }

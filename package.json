@@ -14,7 +14,7 @@
     "codegen": "graphql-codegen -c codegen.yml",
     "preverify": "yarn codegen",
     "verify": "yarn audit-with-suppressions && yarn lint && yarn unit-test",
-    "unit-test": "jest --coverage src",
+    "unit-test": "jest --verbose --coverage src",
     "integration-test": "jest test/integration",
     "clean": "rm -rf lib docs",
     "build": "yarn codegen && yarn verify && yarn build:transpile && yarn build:declarations && yarn build:docs",

@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AppSyncError, ConfigurationManager } from '@sudoplatform/sudo-common'
+import {
+  AppSyncError,
+  ConfigurationManager,
+  NoEntitlementsError,
+  UnknownGraphQLError,
+} from '@sudoplatform/sudo-common'
 import { NormalizedCacheObject } from 'apollo-cache-inmemory'
 import { NetworkStatus } from 'apollo-client'
 import { AWSAppSyncClient } from 'aws-appsync'
@@ -160,6 +165,47 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.query(anything())).once()
     })
+
+    it('should throw NoEntitlementsError when returned', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType = 'sudoplatform.NoEntitlementsError'
+      when(
+        mockClient.query<GetEntitlementsForUserQuery>(anything()),
+      ).thenResolve({
+        errors: [error],
+        data: null as unknown as GetEntitlementsForUserQuery,
+        loading: false,
+        stale: false,
+        networkStatus: NetworkStatus.ready,
+      })
+      await expect(
+        adminApiClient.getEntitlementsForUser({ externalId }),
+      ).rejects.toEqual(new NoEntitlementsError())
+    })
+
+    it('should throw NoEntitlementsError when thrown', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType = 'sudoplatform.NoEntitlementsError'
+      when(
+        mockClient.query<GetEntitlementsForUserQuery>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.getEntitlementsForUser({ externalId }),
+      ).rejects.toEqual(new NoEntitlementsError())
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.query<GetEntitlementsForUserQuery>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.getEntitlementsForUser({ externalId }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
+    })
   })
 
   describe('getEntitlementsSet tests', () => {
@@ -208,7 +254,20 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.query(anything())).once()
     })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(mockClient.query<GetEntitlementsSetQuery>(anything())).thenReject(
+        error,
+      )
+
+      await expect(
+        adminApiClient.getEntitlementsSet({ name: entitlementsSet.name }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
+    })
   })
+
   describe('listEntitlementsSets tests', () => {
     it('should return results', async () => {
       when(mockClient.query<ListEntitlementsSetsQuery>(anything())).thenResolve(
@@ -236,7 +295,20 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.query(anything())).once()
     })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(mockClient.query<ListEntitlementsSetsQuery>(anything())).thenReject(
+        error,
+      )
+
+      await expect(adminApiClient.listEntitlementsSets()).rejects.toThrow(
+        new UnknownGraphQLError(error),
+      )
+    })
   })
+
   describe('addEntitlementsSet tests', () => {
     it('should return results', async () => {
       when(
@@ -257,6 +329,7 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
     it('should throw a FatalError on no result', async () => {
       when(
         mockClient.mutate<AddEntitlementsSetMutation>(anything()),
@@ -277,7 +350,7 @@ describe('AdminApiClient test suite', () => {
       verify(mockClient.mutate(anything())).once()
     })
 
-    it('should throw a EntitlementsSetAlreadyExistsError', async () => {
+    it('should throw a EntitlementsSetAlreadyExistsError when that error returned', async () => {
       const error: GraphQLError = new GraphQLError('')
       ;(error as AppSyncError).errorType =
         'sudoplatform.entitlements.EntitlementsSetAlreadyExistsError'
@@ -292,6 +365,32 @@ describe('AdminApiClient test suite', () => {
       await expect(
         adminApiClient.addEntitlementsSet(entitlementsSet),
       ).rejects.toThrow(new EntitlementsSetAlreadyExistsError())
+    })
+
+    it('should throw a EntitlementsSetAlreadyExistsError when that error thrown', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSetAlreadyExistsError'
+
+      when(
+        mockClient.mutate<AddEntitlementsSetMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.addEntitlementsSet(entitlementsSet),
+      ).rejects.toThrow(new EntitlementsSetAlreadyExistsError())
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<AddEntitlementsSetMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.addEntitlementsSet(entitlementsSet),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
     })
   })
 
@@ -315,6 +414,7 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
     it('should throw a FatalError on no result', async () => {
       when(
         mockClient.mutate<SetEntitlementsSetMutation>(anything()),
@@ -335,7 +435,7 @@ describe('AdminApiClient test suite', () => {
       verify(mockClient.mutate(anything())).once()
     })
 
-    it('should throw a EntitlementsSetImmutableError', async () => {
+    it('should throw a EntitlementsSetImmutableError when returned', async () => {
       const error: GraphQLError = new GraphQLError('')
       ;(error as AppSyncError).errorType =
         'sudoplatform.entitlements.EntitlementsSetImmutableError'
@@ -350,6 +450,32 @@ describe('AdminApiClient test suite', () => {
       await expect(
         adminApiClient.setEntitlementsSet(entitlementsSet),
       ).rejects.toThrow(new EntitlementsSetImmutableError())
+    })
+
+    it('should throw a EntitlementsSetImmutableError when thrown', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSetImmutableError'
+
+      when(
+        mockClient.mutate<SetEntitlementsSetMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.setEntitlementsSet(entitlementsSet),
+      ).rejects.toThrow(new EntitlementsSetImmutableError())
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<SetEntitlementsSetMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.setEntitlementsSet(entitlementsSet),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
     })
   })
 
@@ -373,6 +499,7 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
     it.each`
       result
       ${undefined}
@@ -416,6 +543,18 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<RemoveEntitlementsSetMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.removeEntitlementsSet({ name: entitlementsSet.name }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
+    })
   })
 
   describe('applyEntitlementsSetToUser tests', () => {
@@ -443,6 +582,7 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
     it('should throw a FatalError on no result', async () => {
       when(
         mockClient.mutate<ApplyEntitlementsSetToUserMutation>(anything()),
@@ -468,7 +608,7 @@ describe('AdminApiClient test suite', () => {
       verify(mockClient.mutate(anything())).once()
     })
 
-    it('should throw a EntitlementsSetNotFoundError', async () => {
+    it('should throw a EntitlementsSetNotFoundError when returned', async () => {
       const error: GraphQLError = new GraphQLError('')
       ;(error as AppSyncError).errorType =
         'sudoplatform.entitlements.EntitlementsSetNotFoundError'
@@ -486,6 +626,38 @@ describe('AdminApiClient test suite', () => {
           entitlementsSetName: entitlementsSet.name,
         }),
       ).rejects.toThrow(new EntitlementsSetNotFoundError())
+    })
+
+    it('should throw a EntitlementsSetNotFoundError when thrown', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSetNotFoundError'
+
+      when(
+        mockClient.mutate<ApplyEntitlementsSetToUserMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyEntitlementsSetToUser({
+          externalId,
+          entitlementsSetName: entitlementsSet.name,
+        }),
+      ).rejects.toThrow(new EntitlementsSetNotFoundError())
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<ApplyEntitlementsSetToUserMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyEntitlementsSetToUser({
+          externalId,
+          entitlementsSetName: entitlementsSet.name,
+        }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
     })
   })
 
@@ -514,6 +686,7 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
     it('should throw a FatalError on no result', async () => {
       when(
         mockClient.mutate<ApplyEntitlementsToUserMutation>(anything()),
@@ -538,7 +711,8 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
-    it('should throw a InvalidEntitlementsError', async () => {
+
+    it('should throw a InvalidEntitlementsError when returned', async () => {
       const error: GraphQLError = new GraphQLError('')
       ;(error as AppSyncError).errorType =
         'sudoplatform.entitlements.InvalidEntitlementsError'
@@ -556,6 +730,38 @@ describe('AdminApiClient test suite', () => {
           entitlements: userEntitlements.entitlements,
         }),
       ).rejects.toThrow(new InvalidEntitlementsError())
+    })
+
+    it('should throw a InvalidEntitlementsError when thrown', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.InvalidEntitlementsError'
+
+      when(
+        mockClient.mutate<ApplyEntitlementsToUserMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyEntitlementsToUser({
+          externalId,
+          entitlements: userEntitlements.entitlements,
+        }),
+      ).rejects.toThrow(new InvalidEntitlementsError())
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<ApplyEntitlementsToUserMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyEntitlementsToUser({
+          externalId,
+          entitlements: userEntitlements.entitlements,
+        }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
     })
   })
 
@@ -613,6 +819,20 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.query(anything())).once()
     })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.query<GetEntitlementsSequenceQuery>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.getEntitlementsSequence({
+          name: entitlementsSequence.name,
+        }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
+    })
   })
 
   describe('listEntitlementsSequences tests', () => {
@@ -644,6 +864,18 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.query(anything())).once()
     })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.query<ListEntitlementsSequencesQuery>(anything()),
+      ).thenReject(error)
+
+      await expect(adminApiClient.listEntitlementsSequences()).rejects.toThrow(
+        new UnknownGraphQLError(error),
+      )
+    })
   })
 
   describe('addEntitlementsSequence tests', () => {
@@ -666,6 +898,7 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
     it('should throw a FatalError on no result', async () => {
       when(
         mockClient.mutate<AddEntitlementsSequenceMutation>(anything()),
@@ -686,7 +919,7 @@ describe('AdminApiClient test suite', () => {
       verify(mockClient.mutate(anything())).once()
     })
 
-    it('should throw a EntitlementsSetAlreadyExistsError', async () => {
+    it('should throw a EntitlementsSetAlreadyExistsError when returned', async () => {
       const error: GraphQLError = new GraphQLError('')
       ;(error as AppSyncError).errorType =
         'sudoplatform.entitlements.EntitlementsSetAlreadyExistsError'
@@ -701,6 +934,32 @@ describe('AdminApiClient test suite', () => {
       await expect(
         adminApiClient.addEntitlementsSequence(entitlementsSequence),
       ).rejects.toThrow(new EntitlementsSetAlreadyExistsError())
+    })
+
+    it('should throw a EntitlementsSetAlreadyExistsError when thrown', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSetAlreadyExistsError'
+
+      when(
+        mockClient.mutate<AddEntitlementsSequenceMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.addEntitlementsSequence(entitlementsSequence),
+      ).rejects.toThrow(new EntitlementsSetAlreadyExistsError())
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<AddEntitlementsSequenceMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.addEntitlementsSequence(entitlementsSequence),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
     })
   })
 
@@ -724,6 +983,7 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
     it('should throw a FatalError on no result', async () => {
       when(
         mockClient.mutate<SetEntitlementsSequenceMutation>(anything()),
@@ -742,6 +1002,18 @@ describe('AdminApiClient test suite', () => {
         fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<SetEntitlementsSequenceMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.setEntitlementsSequence(entitlementsSequence),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
     })
   })
 
@@ -767,6 +1039,7 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
     it.each`
       result
       ${undefined}
@@ -814,6 +1087,20 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<RemoveEntitlementsSequenceMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.removeEntitlementsSequence({
+          name: entitlementsSequence.name,
+        }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
+    })
   })
 
   describe('applyEntitlementsSequenceToUser tests', () => {
@@ -853,6 +1140,7 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
     it('should throw a FatalError on no result', async () => {
       when(
         mockClient.mutate<ApplyEntitlementsSequenceToUserMutation>(anything()),
@@ -880,7 +1168,8 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
-    it('should throw a EntitlementsSequenceNotFoundError', async () => {
+
+    it('should throw a EntitlementsSequenceNotFoundError when returned', async () => {
       const error: GraphQLError = new GraphQLError('')
       ;(error as AppSyncError).errorType =
         'sudoplatform.entitlements.EntitlementsSequenceNotFoundError'
@@ -898,6 +1187,38 @@ describe('AdminApiClient test suite', () => {
           entitlementsSequenceName: entitlementsSequence.name,
         }),
       ).rejects.toThrow(new EntitlementsSequenceNotFoundError())
+    })
+
+    it('should throw a EntitlementsSequenceNotFoundError when thrown', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSequenceNotFoundError'
+
+      when(
+        mockClient.mutate<ApplyEntitlementsSequenceToUserMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyEntitlementsSequenceToUser({
+          externalId,
+          entitlementsSequenceName: entitlementsSequence.name,
+        }),
+      ).rejects.toThrow(new EntitlementsSequenceNotFoundError())
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<ApplyEntitlementsSequenceToUserMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyEntitlementsSequenceToUser({
+          externalId,
+          entitlementsSequenceName: entitlementsSequence.name,
+        }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
     })
   })
 
@@ -921,6 +1242,7 @@ describe('AdminApiClient test suite', () => {
       })
       verify(mockClient.mutate(anything())).once()
     })
+
     it.each`
       result
       ${undefined}
@@ -963,6 +1285,18 @@ describe('AdminApiClient test suite', () => {
         fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<RemoveEntitledUserMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.removeEntitledUser({ externalId: 'dummy_external_id' }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
     })
   })
 })
