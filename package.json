@@ -36,7 +36,7 @@
     "apollo-cache-inmemory": "^1.6.6",
     "aws-appsync": "4.0.3",
     "aws-appsync-auth-link": "2.0.5",
-    "fp-ts": "^2.11.8",
+    "fp-ts": "^2.11.9",
     "graphql": "^15.8.0",
     "io-ts": "^2.2.16",
     "monocle-ts": "^2.3.12",
@@ -51,52 +51,53 @@
     "**/apollo-cache-inmemory": "^1.6.6",
     "node-fetch": "^2.6.7",
     "graphql": "^15.8.0",
-    "@graphql-tools/utils": "^8.6.2",
+    "@graphql-tools/utils": "^8.6.5",
     "ansi-regex": "^5.0.1",
-    "tmpl": "^1.0.5"
+    "tmpl": "^1.0.5",
+    "minimist": "^1.2.6"
   },
   "devDependencies": {
     "@babel/cli": "^7.17.6",
-    "@babel/core": "^7.17.5",
+    "@babel/core": "^7.17.8",
     "@babel/plugin-proposal-class-properties": "^7.16.7",
     "@babel/plugin-proposal-private-methods": "^7.16.11",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
     "@graphql-codegen/add": "^3.1.1",
     "@graphql-codegen/cli": "^2.6.2",
-    "@graphql-codegen/typed-document-node": "^2.2.7",
-    "@graphql-codegen/typescript": "^2.4.7",
-    "@graphql-codegen/typescript-operations": "^2.3.4",
-    "@graphql-tools/utils": "^8.6.2",
+    "@graphql-codegen/typed-document-node": "^2.2.8",
+    "@graphql-codegen/typescript": "^2.4.8",
+    "@graphql-codegen/typescript-operations": "^2.3.5",
+    "@graphql-tools/utils": "^8.6.5",
     "@sudoplatform/sudo-common": "^6.2.0",
     "@types/jest": "^27.4.1",
     "@types/uuid": "^8.3.4",
-    "@typescript-eslint/eslint-plugin": "^5.14.0",
-    "@typescript-eslint/parser": "^5.14.0",
+    "@typescript-eslint/eslint-plugin": "^5.17.0",
+    "@typescript-eslint/parser": "^5.17.0",
     "apollo-client": "^2.6.10",
-    "dotenv": "^14.3.2",
-    "eslint": "^8.11.0",
+    "dotenv": "^16.0.0",
+    "eslint": "^8.12.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-prettier": "^4.0.0",
     "isomorphic-fetch": "^2.2.1",
     "jest": "^27.5.1",
-    "prettier": "^2.5.1",
-    "ts-jest": "^27.1.3",
+    "prettier": "^2.6.1",
+    "ts-jest": "^27.1.4",
     "ts-mockito": "^2.6.1",
     "typedoc": "^0.22.13",
-    "typescript": "^4.6.2"
+    "typescript": "^4.6.3"
   },
   "outdatedSuppressions": {
     "major": {
-      "ansi-regex": 1643085534,
-      "aws-appsync-auth-link": 1643085589,
-      "graphql": 1643085606,
-      "isomorphic-fetch": 1643085624,
-      "node-fetch": 1643085647
+      "ansi-regex": 1649983885,
+      "aws-appsync-auth-link": 1649983902,
+      "graphql": 1649983925,
+      "isomorphic-fetch": 1649983930,
+      "node-fetch": 1649983934
     },
     "minor": {
-      "aws-appsync": 1643085565
+      "aws-appsync": 1649983895
     }
   }
 }
