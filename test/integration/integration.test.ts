@@ -19,7 +19,7 @@ const updatableEntitlement = process.env.ENT_UPDATABLE_ENTITLEMENT
 const describeUpdatable = updatableEntitlement ? describe : describe.skip
 
 describe('sudo-entitlements-admin API integration tests', () => {
-  jest.setTimeout(45000)
+  jest.setTimeout(90000)
 
   let sudoEntitlementsAdmin: SudoEntitlementsAdminClient
   let beforeAllComplete = false
@@ -69,6 +69,10 @@ describe('sudo-entitlements-admin API integration tests', () => {
     it('should successfully read entitlements sets', async () => {
       expectBeforeAllComplete()
 
+      // Bound this at some number
+      const maxVerifications = 10
+      let verifications = 0
+
       for (
         let entitlementsSetsConnection =
           await sudoEntitlementsAdmin.listEntitlementsSets();
@@ -79,24 +83,32 @@ describe('sudo-entitlements-admin API integration tests', () => {
           )
       ) {
         for (const listedEntitlementsSet of entitlementsSetsConnection.items) {
+          if (verifications > maxVerifications) {
+            // Enough
+            return
+          }
+
           const gottenEntitlementsSet =
             await sudoEntitlementsAdmin.getEntitlementsSet(
               listedEntitlementsSet.name,
             )
 
           // It's possible we're running this against an instance where entitlements
-          // sets are changing so cater for that
-          expect(gottenEntitlementsSet?.version).toBeGreaterThanOrEqual(
-            listedEntitlementsSet.version,
-          )
-          if (
-            gottenEntitlementsSet?.version === listedEntitlementsSet.version
-          ) {
-            expect(gottenEntitlementsSet).toEqual(listedEntitlementsSet)
-          } else {
-            expect(gottenEntitlementsSet).toMatchObject({
-              name: listedEntitlementsSet.name,
-            })
+          // sets are changing or being deleted so cater for that
+          if (gottenEntitlementsSet) {
+            expect(gottenEntitlementsSet?.version).toBeGreaterThanOrEqual(
+              listedEntitlementsSet.version,
+            )
+            if (
+              gottenEntitlementsSet.version === listedEntitlementsSet.version
+            ) {
+              expect(gottenEntitlementsSet).toEqual(listedEntitlementsSet)
+              ++verifications
+            } else {
+              expect(gottenEntitlementsSet).toMatchObject({
+                name: listedEntitlementsSet.name,
+              })
+            }
           }
         }
       }
@@ -113,6 +125,10 @@ describe('sudo-entitlements-admin API integration tests', () => {
     it('should successfully list entitlements sequences', async () => {
       expectBeforeAllComplete()
 
+      // Bound this at some number
+      const maxVerifications = 10
+      let verifications = 0
+
       for (
         let entitlementsSequencesConnection =
           await sudoEntitlementsAdmin.listEntitlementsSequences();
@@ -123,27 +139,35 @@ describe('sudo-entitlements-admin API integration tests', () => {
           )
       ) {
         for (const listedEntitlementsSequence of entitlementsSequencesConnection.items) {
+          if (verifications > maxVerifications) {
+            // Enough
+            return
+          }
+
           const gottenEntitlementsSequence =
             await sudoEntitlementsAdmin.getEntitlementsSequence(
               listedEntitlementsSequence.name,
             )
 
           // It's possible we're running this against an instance where entitlements
-          // sets are changing so cater for that
-          expect(gottenEntitlementsSequence?.version).toBeGreaterThanOrEqual(
-            listedEntitlementsSequence.version,
-          )
-          if (
-            gottenEntitlementsSequence?.version ===
-            listedEntitlementsSequence.version
-          ) {
-            expect(gottenEntitlementsSequence).toEqual(
-              listedEntitlementsSequence,
+          // sets are changing or being deleted so cater for that
+          if (gottenEntitlementsSequence) {
+            expect(gottenEntitlementsSequence.version).toBeGreaterThanOrEqual(
+              listedEntitlementsSequence.version,
             )
-          } else {
-            expect(gottenEntitlementsSequence).toMatchObject({
-              name: listedEntitlementsSequence.name,
-            })
+            if (
+              gottenEntitlementsSequence?.version ===
+              listedEntitlementsSequence.version
+            ) {
+              expect(gottenEntitlementsSequence).toEqual(
+                listedEntitlementsSequence,
+              )
+              ++verifications
+            } else {
+              expect(gottenEntitlementsSequence).toMatchObject({
+                name: listedEntitlementsSequence.name,
+              })
+            }
           }
         }
       }
