@@ -13,6 +13,7 @@ import AWSAppSyncClient, { AUTH_TYPE } from 'aws-appsync'
 import { AuthOptions } from 'aws-appsync-auth-link'
 import { GraphQLError } from 'graphql'
 import * as t from 'io-ts'
+import { ErrorCodeTransformer } from '../data/transformers/errorCodeTransformer'
 import {
   AddEntitlementsSequenceDocument,
   AddEntitlementsSequenceInput,
@@ -23,12 +24,21 @@ import {
   ApplyEntitlementsSequenceToUserDocument,
   ApplyEntitlementsSequenceToUserInput,
   ApplyEntitlementsSequenceToUserMutation,
+  ApplyEntitlementsSequenceToUsersDocument,
+  ApplyEntitlementsSequenceToUsersInput,
+  ApplyEntitlementsSequenceToUsersMutation,
   ApplyEntitlementsSetToUserDocument,
   ApplyEntitlementsSetToUserInput,
   ApplyEntitlementsSetToUserMutation,
+  ApplyEntitlementsSetToUsersDocument,
+  ApplyEntitlementsSetToUsersInput,
+  ApplyEntitlementsSetToUsersMutation,
   ApplyEntitlementsToUserDocument,
   ApplyEntitlementsToUserInput,
   ApplyEntitlementsToUserMutation,
+  ApplyEntitlementsToUsersDocument,
+  ApplyEntitlementsToUsersInput,
+  ApplyEntitlementsToUsersMutation,
   EntitledUser,
   EntitlementsSequence,
   EntitlementsSequencesConnection,
@@ -36,6 +46,7 @@ import {
   EntitlementsSetsConnection,
   ExternalEntitlementsConsumption,
   ExternalUserEntitlements,
+  ExternalUserEntitlementsResult,
   GetEntitlementsForUserDocument,
   GetEntitlementsForUserInput,
   GetEntitlementsForUserQuery,
@@ -66,11 +77,14 @@ import {
   SetEntitlementsSetMutation,
 } from '../gen/graphqlTypes'
 import {
+  AlreadyUpdatedError,
+  BulkOperationDuplicateUsersError,
   EntitlementsSequenceAlreadyExistsError,
   EntitlementsSequenceNotFoundError,
+  EntitlementsSequenceUpdateInProgressError,
   EntitlementsSetAlreadyExistsError,
   EntitlementsSetImmutableError,
-  EntitlementsSetInUse,
+  EntitlementsSetInUseError,
   EntitlementsSetNotFoundError,
   FatalError,
   InvalidEntitlementsError,
@@ -155,21 +169,15 @@ export class AdminApiClient {
       })
   }
 
-  private graphQLErrorToClientError(error: AppSyncError): Error {
+  public graphQLErrorToClientError(error: AppSyncError): Error {
     if (error.errorType?.startsWith('sudoplatform.entitlements.')) {
       const code = error.errorType.replace('sudoplatform.entitlements.', '')
       switch (code) {
-        case 'InvalidEntitlementsError': {
-          return new InvalidEntitlementsError()
+        case 'AlreadyUpdatedError': {
+          return new AlreadyUpdatedError()
         }
-        case 'EntitlementsSetInUse': {
-          return new EntitlementsSetInUse()
-        }
-        case 'EntitlementsSetNotFoundError': {
-          return new EntitlementsSetNotFoundError()
-        }
-        case 'EntitlementsSetAlreadyExistsError': {
-          return new EntitlementsSetAlreadyExistsError()
+        case 'BulkOperationDuplicateUsersError': {
+          return new BulkOperationDuplicateUsersError()
         }
         case 'EntitlementsSequenceAlreadyExistsError': {
           return new EntitlementsSequenceAlreadyExistsError()
@@ -177,8 +185,23 @@ export class AdminApiClient {
         case 'EntitlementsSequenceNotFoundError': {
           return new EntitlementsSequenceNotFoundError()
         }
+        case 'EntitlementsSequenceUpdateInProgressError': {
+          return new EntitlementsSequenceUpdateInProgressError()
+        }
+        case 'EntitlementsSetAlreadyExistsError': {
+          return new EntitlementsSetAlreadyExistsError()
+        }
         case 'EntitlementsSetImmutableError': {
           return new EntitlementsSetImmutableError()
+        }
+        case 'EntitlementsSetInUseError': {
+          return new EntitlementsSetInUseError()
+        }
+        case 'EntitlementsSetNotFoundError': {
+          return new EntitlementsSetNotFoundError()
+        }
+        case 'InvalidEntitlementsError': {
+          return new InvalidEntitlementsError()
         }
       }
     }
@@ -205,7 +228,7 @@ export class AdminApiClient {
       }
     }
     if (returnedError) {
-      throw this.graphQLErrorToClientError(returnedError)
+      throw ErrorCodeTransformer.toError(returnedError?.errorType ?? undefined)
     } else {
       throw new FatalError('no error to map')
     }
@@ -526,6 +549,36 @@ export class AdminApiClient {
     this.mapAndThrowError(graphqlError, thrownError)
   }
 
+  public async applyEntitlementsSequenceToUsers(
+    input: ApplyEntitlementsSequenceToUsersInput,
+  ): Promise<ExternalUserEntitlementsResult[]> {
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result =
+        await this.client.mutate<ApplyEntitlementsSequenceToUsersMutation>({
+          mutation: ApplyEntitlementsSequenceToUsersDocument,
+          variables: { input },
+          fetchPolicy: mutationFetchPolicy,
+        })
+
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.applyEntitlementsSequenceToUsers
+        } else {
+          throw new FatalError(
+            'applyEntitlementsSequenceToUsers unexpectedly falsy',
+          )
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
+    }
+
+    this.mapAndThrowError(graphqlError, thrownError)
+  }
+
   public async applyEntitlementsSetToUser(
     input: ApplyEntitlementsSetToUserInput,
   ): Promise<ExternalUserEntitlements> {
@@ -556,6 +609,36 @@ export class AdminApiClient {
     this.mapAndThrowError(graphqlError, thrownError)
   }
 
+  public async applyEntitlementsSetToUsers(
+    input: ApplyEntitlementsSetToUsersInput,
+  ): Promise<ExternalUserEntitlementsResult[]> {
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result =
+        await this.client.mutate<ApplyEntitlementsSetToUsersMutation>({
+          mutation: ApplyEntitlementsSetToUsersDocument,
+          variables: { input },
+          fetchPolicy: mutationFetchPolicy,
+        })
+
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.applyEntitlementsSetToUsers
+        } else {
+          throw new FatalError(
+            'applyEntitlementsSetToUsers did not return any result.',
+          )
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
+    }
+
+    this.mapAndThrowError(graphqlError, thrownError)
+  }
+
   public async applyEntitlementsToUser(
     input: ApplyEntitlementsToUserInput,
   ): Promise<ExternalUserEntitlements> {
@@ -575,6 +658,37 @@ export class AdminApiClient {
         } else {
           throw new FatalError(
             'applyEntitlementsToUser did not return any result.',
+          )
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
+    }
+
+    this.mapAndThrowError(graphqlError, thrownError)
+  }
+
+  public async applyEntitlementsToUsers(
+    input: ApplyEntitlementsToUsersInput,
+  ): Promise<ExternalUserEntitlementsResult[]> {
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.mutate<ApplyEntitlementsToUsersMutation>(
+        {
+          mutation: ApplyEntitlementsToUsersDocument,
+          variables: { input },
+          fetchPolicy: mutationFetchPolicy,
+        },
+      )
+
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.applyEntitlementsToUsers
+        } else {
+          throw new FatalError(
+            'applyEntitlementsToUsers did not return any result.',
           )
         }
       }

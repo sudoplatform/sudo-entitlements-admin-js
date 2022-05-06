@@ -8,6 +8,7 @@
   },
   "license": "Apache-2.0",
   "scripts": {
+    "prepare": "husky install",
     "lint": "yarn lint:eslint && yarn lint:prettier",
     "lint:eslint": "eslint \"{bin,test,src}/**/*.{js,ts,tsx}\"",
     "lint:prettier": "prettier -l \"{bin,test,src}/**/*.{js,json,jsx,ts,tsx}\"",
@@ -65,11 +66,11 @@
     "@babel/preset-typescript": "^7.16.7",
     "@graphql-codegen/add": "^3.1.1",
     "@graphql-codegen/cli": "^2.6.2",
-    "@graphql-codegen/typed-document-node": "^2.2.8",
-    "@graphql-codegen/typescript": "^2.4.8",
-    "@graphql-codegen/typescript-operations": "^2.3.5",
+    "@graphql-codegen/typed-document-node": "^2.2.10",
+    "@graphql-codegen/typescript": "^2.4.10",
+    "@graphql-codegen/typescript-operations": "^2.3.7",
     "@graphql-tools/utils": "^8.6.8",
-    "@sudoplatform/sudo-common": "^6.2.0",
+    "@sudoplatform/sudo-common": "^6.2.1",
     "@types/jest": "^27.4.1",
     "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^5.20.0",
@@ -80,6 +81,7 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^7.0.4",
     "isomorphic-fetch": "^2.2.1",
     "jest": "^27.5.1",
     "prettier": "^2.6.2",
@@ -90,14 +92,16 @@
   },
   "outdatedSuppressions": {
     "major": {
-      "ansi-regex": 1649983885,
-      "aws-appsync-auth-link": 1649983902,
-      "graphql": 1649983925,
-      "isomorphic-fetch": 1649983930,
-      "node-fetch": 1649983934
+      "ansi-regex": 1653002395,
+      "aws-appsync-auth-link": 1653002403,
+      "graphql": 1653002409,
+      "isomorphic-fetch": 1653002413,
+      "node-fetch": 1653002423,
+      "jest": 1653002418,
+      "ts-jest": 1653002426
     },
     "minor": {
-      "aws-appsync": 1649983895
+      "aws-appsync": 1653002438
     }
   }
 }

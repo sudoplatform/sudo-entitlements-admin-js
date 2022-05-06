@@ -5,6 +5,7 @@ fragment ExternalUserEntitlements on ExternalUserEntitlements {
   externalId
   owner
   entitlementsSetName
+  entitlementsSequenceName
   entitlements {
     ...Entitlement
   }

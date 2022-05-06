@@ -2,6 +2,7 @@
 import {
   AppSyncError,
   ConfigurationManager,
+  LimitExceededError,
   NoEntitlementsError,
   UnknownGraphQLError,
 } from '@sudoplatform/sudo-common'
@@ -19,9 +20,14 @@ import {
   when,
 } from 'ts-mockito'
 import {
+  AlreadyUpdatedError,
+  BulkOperationDuplicateUsersError,
+  EntitlementsSequenceAlreadyExistsError,
   EntitlementsSequenceNotFoundError,
+  EntitlementsSequenceUpdateInProgressError,
   EntitlementsSetAlreadyExistsError,
   EntitlementsSetImmutableError,
+  EntitlementsSetInUseError,
   EntitlementsSetNotFoundError,
   InvalidEntitlementsError,
 } from '..'
@@ -61,6 +67,8 @@ import {
   ApplyEntitlementsSequenceToUserDocument,
   RemoveEntitledUserMutation,
   RemoveEntitledUserDocument,
+  ApplyEntitlementsSetToUsersMutation,
+  ApplyEntitlementsSetToUsersDocument,
 } from '../gen/graphqlTypes'
 import { AdminApiClient, AdminConsoleProject } from './adminApiClient'
 
@@ -98,7 +106,10 @@ describe('AdminApiClient test suite', () => {
 
   const now = Date.now()
   const externalId = 'external-id'
-  const userEntitlements: ExternalUserEntitlements = {
+  const userEntitlements: ExternalUserEntitlements & {
+    __typename: 'ExternalUserEntitlements'
+  } = {
+    __typename: 'ExternalUserEntitlements',
     createdAtEpochMs: now,
     updatedAtEpochMs: now,
     version: 1,
@@ -609,6 +620,126 @@ describe('AdminApiClient test suite', () => {
     })
 
     it('should throw a EntitlementsSetNotFoundError when returned', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSetNotFoundError'
+
+      when(
+        mockClient.mutate<ApplyEntitlementsSetToUserMutation>(anything()),
+      ).thenResolve({
+        errors: [error],
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.applyEntitlementsSetToUser({
+          externalId,
+          entitlementsSetName: entitlementsSet.name,
+        }),
+      ).rejects.toThrow(new EntitlementsSetNotFoundError())
+    })
+
+    it('should throw a EntitlementsSetNotFoundError when thrown', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.EntitlementsSetNotFoundError'
+
+      when(
+        mockClient.mutate<ApplyEntitlementsSetToUserMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyEntitlementsSetToUser({
+          externalId,
+          entitlementsSetName: entitlementsSet.name,
+        }),
+      ).rejects.toThrow(new EntitlementsSetNotFoundError())
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<ApplyEntitlementsSetToUserMutation>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyEntitlementsSetToUser({
+          externalId,
+          entitlementsSetName: entitlementsSet.name,
+        }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
+    })
+  })
+
+  describe('applyEntitlementsSetToUsers tests', () => {
+    it('should return results', async () => {
+      when(
+        mockClient.mutate<ApplyEntitlementsSetToUsersMutation>(anything()),
+      ).thenResolve({
+        data: { applyEntitlementsSetToUsers: [userEntitlements] },
+      })
+
+      await expect(
+        adminApiClient.applyEntitlementsSetToUsers({
+          operations: [
+            {
+              externalId,
+              entitlementsSetName: entitlementsSet.name,
+            },
+          ],
+        }),
+      ).resolves.toEqual([userEntitlements])
+
+      verify(mockClient.mutate(anything())).once()
+      const [actualMutation] = capture(mockClient.mutate as any).first()
+      expect(actualMutation).toEqual({
+        mutation: ApplyEntitlementsSetToUsersDocument,
+        variables: {
+          input: {
+            operations: [
+              { externalId, entitlementsSetName: entitlementsSet.name },
+            ],
+          },
+        },
+        fetchPolicy: 'no-cache',
+      })
+    })
+
+    it('should throw a FatalError on no result', async () => {
+      when(
+        mockClient.mutate<ApplyEntitlementsSetToUsersMutation>(anything()),
+      ).thenResolve({
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.applyEntitlementsSetToUsers({
+          operations: [
+            {
+              externalId,
+              entitlementsSetName: entitlementsSet.name,
+            },
+          ],
+        }),
+      ).rejects.toThrowErrorMatchingSnapshot()
+
+      verify(mockClient.mutate(anything())).once()
+      const [actualMutation] = capture(mockClient.mutate as any).first()
+      expect(actualMutation).toEqual({
+        mutation: ApplyEntitlementsSetToUsersDocument,
+        variables: {
+          input: {
+            operations: [
+              { externalId, entitlementsSetName: entitlementsSet.name },
+            ],
+          },
+        },
+        fetchPolicy: 'no-cache',
+      })
+    })
+
+    it('should return error result with a EntitlementsSetNotFoundError when returned', async () => {
       const error: GraphQLError = new GraphQLError('')
       ;(error as AppSyncError).errorType =
         'sudoplatform.entitlements.EntitlementsSetNotFoundError'
@@ -1297,6 +1428,38 @@ describe('AdminApiClient test suite', () => {
       await expect(
         adminApiClient.removeEntitledUser({ externalId: 'dummy_external_id' }),
       ).rejects.toThrow(new UnknownGraphQLError(error))
+    })
+  })
+
+  describe('graphQLErrorToClientError', () => {
+    it.each`
+      errorType                                                                | expected
+      ${'sudoplatform.entitlements.InvalidEntitlementsError'}                  | ${InvalidEntitlementsError}
+      ${'sudoplatform.entitlements.EntitlementsSetInUseError'}                 | ${EntitlementsSetInUseError}
+      ${'sudoplatform.entitlements.EntitlementsSetNotFoundError'}              | ${EntitlementsSetNotFoundError}
+      ${'sudoplatform.entitlements.EntitlementsSetAlreadyExistsError'}         | ${EntitlementsSetAlreadyExistsError}
+      ${'sudoplatform.entitlements.EntitlementsSequenceAlreadyExistsError'}    | ${EntitlementsSequenceAlreadyExistsError}
+      ${'sudoplatform.entitlements.EntitlementsSequenceNotFoundError'}         | ${EntitlementsSequenceNotFoundError}
+      ${'sudoplatform.entitlements.EntitlementsSetImmutableError'}             | ${EntitlementsSetImmutableError}
+      ${'sudoplatform.entitlements.EntitlementsSequenceUpdateInProgressError'} | ${EntitlementsSequenceUpdateInProgressError}
+      ${'sudoplatform.entitlements.BulkOperationDuplicateUsersError'}          | ${BulkOperationDuplicateUsersError}
+      ${'sudoplatform.entitlements.AlreadyUpdatedError'}                       | ${AlreadyUpdatedError}
+      ${'sudoplatform.LimitExceededError'}                                     | ${LimitExceededError}
+    `('should map $errorType correctly', ({ errorType, expected }) => {
+      expect(
+        adminApiClient.graphQLErrorToClientError({
+          errorType,
+          extensions: {},
+          name: '',
+          message: '',
+          locations: undefined,
+          path: undefined,
+          nodes: undefined,
+          source: undefined,
+          positions: undefined,
+          originalError: undefined,
+        }),
+      ).toEqual(new expected())
     })
   })
 })

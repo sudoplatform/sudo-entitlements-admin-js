@@ -13,6 +13,7 @@ export class ExternalUserEntitlementsTransformer {
       externalId: graphql.externalId,
       owner: graphql.owner ?? undefined,
       entitlementsSetName: graphql.entitlementsSetName ?? undefined,
+      entitlementsSequenceName: graphql.entitlementsSequenceName ?? undefined,
       entitlements: graphql.entitlements.map(EntitlementTransformer.toClient),
       transitionsRelativeTo: graphql.transitionsRelativeToEpochMs
         ? new Date(graphql.transitionsRelativeToEpochMs)
@@ -30,6 +31,7 @@ export class ExternalUserEntitlementsTransformer {
       externalId: client.externalId,
       owner: client.owner,
       entitlementsSetName: client.entitlementsSetName,
+      entitlementsSequenceName: client.entitlementsSequenceName,
       entitlements: client.entitlements.map(EntitlementTransformer.toGraphQL),
       transitionsRelativeToEpochMs: client.transitionsRelativeTo
         ? client.transitionsRelativeTo.getTime()

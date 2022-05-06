@@ -6,6 +6,7 @@ import { EntitlementsSetsConnectionTransformer } from '../data/transformers/enti
 import { EntitlementsSetTransformer } from '../data/transformers/entitlementsSetTransformer'
 import { EntitlementTransformer } from '../data/transformers/entitlementTransformer'
 import { ExternalEntitlementsConsumptionTransformer } from '../data/transformers/externalEntitlementsConsumptionTransformer'
+import { ExternalUserEntitlementsResultTransformer } from '../data/transformers/externalUserEntitlementsResultTransformer'
 import { ExternalUserEntitlementsTransformer } from '../data/transformers/externalUserEntitlementsTransformer'
 import {
   AddEntitlementsSequenceInput,
@@ -263,6 +264,13 @@ export interface ExternalUserEntitlements {
    */
   entitlementsSetName?: string
 
+  /*
+   * Name of the entitlements sequence specified for this user. Will be undefined
+   * if entitlements have been specified explicitly or by entitlements set
+   * rather than by an entitlements sequence name.
+   */
+  entitlementsSequenceName?: string
+
   /**
    * Effective entitlements for the user either obtained from the entitlements
    * set or as specified explicitly for this user.
@@ -274,6 +282,36 @@ export interface ExternalUserEntitlements {
    * be calculated. Defaults to current time.
    */
   transitionsRelativeTo?: Date
+}
+
+/**
+ * Operation error for a particular operation of one of the
+ * bulk applyEntitlements*ToUsers methods.
+ */
+export interface ExternalUserEntitlementsError {
+  /**
+   * Error of failure for the particular operation
+   */
+  error: Error
+}
+
+/**
+ * Individual operation result for the bulk applyEntitlements*ToUsers
+ * methods
+ */
+export type ExternalUserEntitlementsResult =
+  | ExternalUserEntitlements
+  | ExternalUserEntitlementsError
+
+/**
+ * Type guard for ExternalUserEntitlementsResult union type
+ * @param u ExternalUserEntitlementsResult to check
+ * @returns Whether or not u is an ExternalUserEntitlementsError
+ */
+export function isExternalUserEntitlementsError(
+  u: ExternalUserEntitlementsResult,
+): u is ExternalUserEntitlementsError {
+  return 'error' in u
 }
 
 /**
@@ -375,7 +413,7 @@ export interface SudoEntitlementsAdminClient {
   removeEntitlementsSet(name: string): Promise<EntitlementsSet | undefined>
 
   /**
-   * Apply an entitlements set to a user
+   * Apply entitlements to a user
    *
    * If a record for that user's entitlements does not yet exist it will be created.
    *
@@ -393,12 +431,34 @@ export interface SudoEntitlementsAdminClient {
   ): Promise<ExternalUserEntitlements>
 
   /**
-   * Apply entitlements directly to a user
+   * Apply entitlements to users
+   *
+   * Equivalent of multiple calls to {@link applyEntitlementsToUser}
+   *
+   * If a record for any user's entitlements does not yet exist it will be created.
+   *
+   * @param externalId External IDP user ID of user to retrieve entitlements for
+   * @param entitlements The entitlements to apply to the user
+   *
+   * @returns The effective entitlements for the user
+   *
+   * @throws {@link InvalidEntitlementsError}
+   *  - Entitlements contains one or more entitlements with unrecognized names
+   */
+  applyEntitlementsToUsers(
+    operations: {
+      externalId: string
+      entitlements: Entitlement[]
+    }[],
+  ): Promise<ExternalUserEntitlementsResult[]>
+
+  /**
+   * Apply entitlements set to a user
    *
    * If a record for that user's entitlements does not yet exist it will be created.
    *
    * @param externalId External IDP user ID of user to retrieve entitlements for
-   * @param entitlementSetName Name of the entitlements set to apply to the user
+   * @param entitlementsSetName Name of the entitlements set to apply to the user
    *
    * @returns The effective entitlements for the user
    *
@@ -413,8 +473,36 @@ export interface SudoEntitlementsAdminClient {
    */
   applyEntitlementsSetToUser(
     externalId: string,
-    entitlementSetName: string,
+    entitlementsSetName: string,
   ): Promise<ExternalUserEntitlements>
+
+  /**
+   * Apply entitlements sets to users.
+   *
+   * Equivalent of multiple calls to {@link applyEntitlementsSetToUser}
+   *
+   * If a record for a user's entitlements does not yet exist it will be created.
+   *
+   * @param externalId External IDP user ID of user to retrieve entitlements for
+   * @param entitlementsSetName Name of the entitlements set to apply to the user
+   *
+   * @returns The effective entitlements for the user
+   *
+   * @throws {@link EntitlementSetNotFoundError}
+   *  - If the named entitlements set does not exist
+   *
+   * @throws {@link AlreadyUpdatedError}
+   *  - if the user's entitlements have been updated with a later version
+   *
+   * @throws {@link EntitlementSetNotFoundError}
+   * - If the entitlements set named is not defined
+   */
+  applyEntitlementsSetToUsers(
+    operations: {
+      externalId: string
+      entitlementsSetName: string
+    }[],
+  ): Promise<ExternalUserEntitlementsResult[]>
 
   /**
    * Get an entitlements sequence
@@ -492,7 +580,7 @@ export interface SudoEntitlementsAdminClient {
    * If a record for that user's entitlements sequence does not yet exist it will be created.
    *
    * @param externalId External IDP user ID of user to apply entitlements sequence to
-   * @param entitlementSetName Name of the entitlements sequence to apply to the user
+   * @param entitlementsSequenceName Name of the entitlements sequence to apply to the user
    *
    * @returns The effective entitlements for the user
    *
@@ -504,9 +592,35 @@ export interface SudoEntitlementsAdminClient {
    */
   applyEntitlementsSequenceToUser(
     externalId: string,
-    entitlementSequenceName: string,
+    entitlementsSequenceName: string,
     transitionsRelativeTo?: Date,
   ): Promise<ExternalUserEntitlements>
+
+  /**
+   * Apply entitlements sequence to users
+   *
+   * Equivalent of multiple calls to {@link applyEntitlementsSequenceToUser}
+   *
+   * If a record for any user's entitlements sequence does not yet exist it will be created.
+   *
+   * @param externalId External IDP user ID of user to apply entitlements sequence to
+   * @param entitlementSequenceName Name of the entitlements sequence to apply to the user
+   *
+   * @returns The effective entitlements for the user
+   *
+   * @throws {@link AlreadyUpdatedError}
+   *  - if the user's entitlements have been updated with a later version
+   *
+   * @throws {@link EntitlementsSequenceNotFoundError}
+   * - If the entitlements sequence named is not defined
+   */
+  applyEntitlementsSequenceToUsers(
+    operations: {
+      externalId: string
+      entitlementsSequenceName: string
+      transitionsRelativeTo?: Date
+    }[],
+  ): Promise<ExternalUserEntitlementsResult[]>
 
   /**
    * Remove entitlements and consumption records of the specified user.
@@ -619,6 +733,18 @@ export class DefaultSudoEntitlementsAdminClient
     return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
   }
 
+  async applyEntitlementsSetToUsers(
+    operations: {
+      externalId: string
+      entitlementsSetName: string
+    }[],
+  ): Promise<ExternalUserEntitlementsResult[]> {
+    const results = await this.adminApiClient.applyEntitlementsSetToUsers({
+      operations,
+    })
+    return results.map(ExternalUserEntitlementsResultTransformer.toClient)
+  }
+
   async applyEntitlementsToUser(
     externalId: string,
     entitlements: Entitlement[],
@@ -628,6 +754,21 @@ export class DefaultSudoEntitlementsAdminClient
       entitlements: entitlements.map(EntitlementTransformer.toGraphQL),
     })
     return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
+  }
+
+  async applyEntitlementsToUsers(
+    operations: {
+      externalId: string
+      entitlements: Entitlement[]
+    }[],
+  ): Promise<ExternalUserEntitlementsResult[]> {
+    const results = await this.adminApiClient.applyEntitlementsToUsers({
+      operations: operations.map((o) => ({
+        externalId: o.externalId,
+        entitlements: o.entitlements.map(EntitlementTransformer.toGraphQL),
+      })),
+    })
+    return results.map(ExternalUserEntitlementsResultTransformer.toClient)
   }
 
   async getEntitlementsSequence(
@@ -713,6 +854,23 @@ export class DefaultSudoEntitlementsAdminClient
         transitionsRelativeToEpochMs: transitionsRelativeTo?.getTime(),
       })
     return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
+  }
+
+  async applyEntitlementsSequenceToUsers(
+    operations: {
+      externalId: string
+      entitlementsSequenceName: string
+      transitionsRelativeTo?: Date
+    }[],
+  ): Promise<ExternalUserEntitlementsResult[]> {
+    const results = await this.adminApiClient.applyEntitlementsSequenceToUsers({
+      operations: operations.map((o) => ({
+        externalId: o.externalId,
+        entitlementsSequenceName: o.entitlementsSequenceName,
+        transitionsRelativeToEpochMs: o.transitionsRelativeTo?.getTime(),
+      })),
+    })
+    return results.map(ExternalUserEntitlementsResultTransformer.toClient)
   }
 
   async removeEntitledUser(

@@ -1,0 +1,13 @@
+mutation ApplyEntitlementsSequenceToUsers(
+  $input: ApplyEntitlementsSequenceToUsersInput!
+) {
+  applyEntitlementsSequenceToUsers(input: $input) {
+    __typename
+    ... on ExternalUserEntitlements {
+      ...ExternalUserEntitlements
+    }
+    ... on ExternalUserEntitlementsError {
+      ...ExternalUserEntitlementsError
+    }
+  }
+}

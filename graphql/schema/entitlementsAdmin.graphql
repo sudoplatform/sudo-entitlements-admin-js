@@ -2,7 +2,7 @@
 ## referenced here
 
 # A set of entitlements
-type EntitlementsSet @aws_api_key @aws_iam {
+type EntitlementsSet {
   # Time of initial creation of an entitlements set in milliseconds
   # since epoch. Number is integral, float type provides sufficient
   # precision.
@@ -27,13 +27,13 @@ type EntitlementsSet @aws_api_key @aws_iam {
 }
 
 # Pagination connection for use when listing entitlements sets
-type EntitlementsSetsConnection @aws_api_key @aws_iam {
+type EntitlementsSetsConnection {
   items: [EntitlementsSet!]!
   nextToken: String
 }
 
 # Definition of a single transition within an entitlements sequence
-type EntitlementsSequenceTransition @aws_api_key @aws_iam {
+type EntitlementsSequenceTransition {
   # Name of entitlements set
   entitlementsSetName: String!
 
@@ -43,7 +43,7 @@ type EntitlementsSequenceTransition @aws_api_key @aws_iam {
 }
 
 # Definition of a sequence of entitlements sets through which a user will transition
-type EntitlementsSequence @aws_api_key @aws_iam {
+type EntitlementsSequence {
   # Name of the entitlements sequence
   name: String!
 
@@ -68,13 +68,13 @@ type EntitlementsSequence @aws_api_key @aws_iam {
 }
 
 # Pagination connection for use when listing entitlements sequences
-type EntitlementsSequencesConnection @aws_api_key @aws_iam {
+type EntitlementsSequencesConnection {
   items: [EntitlementsSequence!]!
   nextToken: String
 }
 
 # Effective entitlements for an external user
-type ExternalUserEntitlements @aws_api_key @aws_iam {
+type ExternalUserEntitlements {
   # Time of initial creation of user entitlements mapping in milliseconds
   # since epoch. Number is integral, float type provides sufficient
   # precision.
@@ -108,6 +108,11 @@ type ExternalUserEntitlements @aws_api_key @aws_iam {
   # entitlements set name.
   entitlementsSetName: String
 
+  # Name of the entitlements sequence specified for this user. Will be undefined
+  # if entitlements have been specified explicitly or by entitlements set
+  # rather than by an entitlements sequence name.
+  entitlementsSequenceName: String
+
   # Effective entitlements for the user either obtained from the entitlements
   # set or as specified explicitly for this user.
   entitlements: [Entitlement!]!
@@ -118,8 +123,19 @@ type ExternalUserEntitlements @aws_api_key @aws_iam {
   transitionsRelativeToEpochMs: Float
 }
 
+# An error result returned for an operation in a bulk applyEntitlements*ToUsers
+# mutation.
+type ExternalUserEntitlementsError {
+  # Error code of failed operation
+  error: String!
+}
+
+# Union of success and error results returned for operations in a bulk
+# applyEntitlements*ToUsers mutation.
+union ExternalUserEntitlementsResult = ExternalUserEntitlements | ExternalUserEntitlementsError
+
 # An aggregated list of entitlement consumption information for an external user.
-type ExternalEntitlementsConsumption @aws_api_key @aws_iam {
+type ExternalEntitlementsConsumption {
   # User's active entitlements
   entitlements: ExternalUserEntitlements!
   # User's entitlement consumption
@@ -174,6 +190,11 @@ input ApplyEntitlementsSetToUserInput {
   entitlementsSetName: String!
 }
 
+# Input for the applyEntitlementsSetToUsers mutation
+input ApplyEntitlementsSetToUsersInput {
+  operations: [ApplyEntitlementsSetToUserInput!]!
+}
+
 # Input for the applyEntitlementsSequenceToUser mutation
 input ApplyEntitlementsSequenceToUserInput {
   externalId: String!
@@ -185,10 +206,20 @@ input ApplyEntitlementsSequenceToUserInput {
   transitionsRelativeToEpochMs: Float
 }
 
+# Input for the applyEntitlementsSequenceToUsers mutation
+input ApplyEntitlementsSequenceToUsersInput {
+  operations: [ApplyEntitlementsSequenceToUserInput!]!
+}
+
 # Input for the applyEntitlementsToUser mutation
 input ApplyEntitlementsToUserInput {
   externalId: String!
   entitlements: [EntitlementInput!]!
+}
+
+# Input for the applyEntitlementsToUsers mutation
+input ApplyEntitlementsToUsersInput {
+  operations: [ApplyEntitlementsToUserInput!]!
 }
 
 # Input for the getEntitlementsForUser query
@@ -259,17 +290,17 @@ type Query {
   # Gets an entitlement sequence.
   getEntitlementsSequence(
     input: GetEntitlementsSequenceInput!
-  ): EntitlementsSequence @aws_api_key @aws_iam
+  ): EntitlementsSequence @aws_iam
 
   # Retrieves all entitlements sequences.
   listEntitlementsSequences(
     nextToken: String
-  ): EntitlementsSequencesConnection! @aws_api_key @aws_iam
+  ): EntitlementsSequencesConnection! @aws_iam
 
   # Retrieve effective entitlements for a given external user.
   getEntitlementsForUser(
     input: GetEntitlementsForUserInput!
-  ): ExternalEntitlementsConsumption! @aws_api_key @aws_iam
+  ): ExternalEntitlementsConsumption! @aws_iam
 }
 
 type Mutation {
@@ -292,33 +323,54 @@ type Mutation {
   # Adds an entitlement sequence
   addEntitlementsSequence(
     input: AddEntitlementsSequenceInput!
-  ): EntitlementsSequence! @aws_api_key @aws_iam
+  ): EntitlementsSequence! @aws_iam
 
   # Replace the definition of an entitlements sequence
   setEntitlementsSequence(
     input: SetEntitlementsSequenceInput!
-  ): EntitlementsSequence! @aws_api_key @aws_iam
+  ): EntitlementsSequence! @aws_iam
 
   # Remove an entitlements sequence. Any users configured against this entitlements
   # sequence will become unentitled.
   removeEntitlementsSequence(
     input: RemoveEntitlementsSequenceInput!
-  ): EntitlementsSequence @aws_api_key @aws_iam
+  ): EntitlementsSequence @aws_iam
 
   # Apply an entitlement set with the specified name to a user.
   applyEntitlementsSetToUser(
     input: ApplyEntitlementsSetToUserInput!
-  ): ExternalUserEntitlements! @aws_api_key @aws_iam
+  ): ExternalUserEntitlements! @aws_iam
+
+  # Apply an entitlement set with the specified names to users in bulk.
+  # Equivalent to calling applyEntitlementsSetToUser
+  # for each operation.
+  applyEntitlementsSetToUsers(
+    input: ApplyEntitlementsSetToUsersInput!
+  ):  [ExternalUserEntitlementsResult!]!
 
   # Apply an entitlement sequence with the specified name to a user.
   applyEntitlementsSequenceToUser(
     input: ApplyEntitlementsSequenceToUserInput!
-  ): ExternalUserEntitlements! @aws_api_key @aws_iam
+  ): ExternalUserEntitlements! @aws_iam
+
+  # Apply an entitlement sequence with the specified names to users in bulk.
+  # Equivalent to calling applyEntitlementsSequenceToUser
+  # for each operation.
+  applyEntitlementsSequenceToUsers(
+    input: ApplyEntitlementsSequenceToUsersInput!
+  ): [ExternalUserEntitlementsResult!]!
 
   # Apply entitlements to a user without using a named entitlements set.
   applyEntitlementsToUser(
     input: ApplyEntitlementsToUserInput!
-  ): ExternalUserEntitlements! @aws_api_key @aws_iam
+  ): ExternalUserEntitlements! @aws_iam
+
+  # Apply entitlements to users without using a named entitlements set.
+  # Equivalent to calling applyEntitlementsToUser
+  # for each operation.
+  applyEntitlementsToUsers(
+    input: ApplyEntitlementsToUsersInput!
+  ): [ExternalUserEntitlementsResult!]!
 
   # Remove an entitled user. Entitlements and consumption records related
   # to the specified user will be removed.

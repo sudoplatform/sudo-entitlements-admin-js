@@ -1,0 +1,13 @@
+mutation ApplyEntitlementsToUsers(
+  $input: ApplyEntitlementsToUsersInput!
+) {
+  applyEntitlementsToUsers(input: $input) {
+    __typename
+    ... on ExternalUserEntitlements {
+      ...ExternalUserEntitlements
+    }
+    ... on ExternalUserEntitlementsError {
+      ...ExternalUserEntitlementsError
+    }
+  }
+}

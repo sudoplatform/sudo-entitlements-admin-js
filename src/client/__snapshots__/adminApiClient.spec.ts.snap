@@ -8,6 +8,8 @@ exports[`AdminApiClient test suite applyEntitlementsSequenceToUser tests should 
 
 exports[`AdminApiClient test suite applyEntitlementsSetToUser tests should throw a FatalError on no result 1`] = `"applyEntitlementsSetToUser did not return any result."`;
 
+exports[`AdminApiClient test suite applyEntitlementsSetToUsers tests should throw a FatalError on no result 1`] = `"applyEntitlementsSetToUsers did not return any result."`;
+
 exports[`AdminApiClient test suite applyEntitlementsToUser tests should throw a FatalError on no result 1`] = `"applyEntitlementsToUser did not return any result."`;
 
 exports[`AdminApiClient test suite removeEntitledUser tests should throw a FatalError on no result 1`] = `"removeEntitledUser did not return any result."`;

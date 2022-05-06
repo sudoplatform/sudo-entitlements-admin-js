@@ -23,10 +23,10 @@ export class InvalidEntitlementsError extends Error {
  * Indicates that an attempt has been made to delete an entitlements set that is currently in use by one or
  * more entitlements sequences.
  */
-export class EntitlementsSetInUse extends Error {
+export class EntitlementsSetInUseError extends Error {
   constructor() {
     super('Specified entitlements set is in use.')
-    this.name = 'EntitlementsSetInUse'
+    this.name = 'EntitlementsSetInUseError'
   }
 }
 
@@ -74,7 +74,39 @@ export class EntitlementsSequenceNotFoundError extends Error {
 }
 
 /**
- * Indicates that an attempt was made to modify or delete an immutable entitlements set was made (e.g. _unentitled_).
+ * Returned if an entitlements sequence update is already in progress
+ * when setEntitlementsSequence or removeEntitlementsSequence is attempted.
+ */
+export class EntitlementsSequenceUpdateInProgressError extends Error {
+  constructor() {
+    super('Specified entitlements sequence update is not yet complete.')
+    this.name = 'EntitlementsSequenceUpdateInProgressError'
+  }
+}
+
+/**
+ * A bulk operations has specified multiple operations for the same user
+ */
+export class BulkOperationDuplicateUsersError extends Error {
+  constructor() {
+    super('Duplicate users specified in bulk apply operation.')
+    this.name = 'BulkOperationDuplicateUsersError'
+  }
+}
+
+/**
+ * Returned if an attempt to update a user's entitlements is made after the
+ * user's entitlements have already been updated to a later version
+ */
+export class AlreadyUpdatedError extends Error {
+  constructor() {
+    super('User entitlements already updated.')
+    this.name = 'AlreadyUpdatedError'
+  }
+}
+
+/**
+ * Returned if the named EntitlementsSet is not modifiable or removable
  */
 export class EntitlementsSetImmutableError extends Error {
   constructor() {
