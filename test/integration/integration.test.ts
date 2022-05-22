@@ -2,6 +2,7 @@ import { DefaultConfigurationManager } from '@sudoplatform/sudo-common'
 import * as dotenv from 'dotenv'
 import fs from 'fs'
 import { v4 } from 'uuid'
+import waitForExpect from 'wait-for-expect'
 
 import {
   DefaultSudoEntitlementsAdminClient,
@@ -20,6 +21,8 @@ const describeUpdatable = updatableEntitlement ? describe : describe.skip
 
 describe('sudo-entitlements-admin API integration tests', () => {
   jest.setTimeout(90000)
+  waitForExpect.defaults.interval = 250
+  waitForExpect.defaults.timeout = 10000
 
   let sudoEntitlementsAdmin: SudoEntitlementsAdminClient
   let beforeAllComplete = false
@@ -251,11 +254,13 @@ describe('sudo-entitlements-admin API integration tests', () => {
         entitlementsSetName: undefined,
       })
 
-      const consumption = await sudoEntitlementsAdmin.getEntitlementsForUser(
-        externalId,
-      )
-      expect(consumption.consumption).toHaveLength(0)
-      expect(consumption.entitlements).toEqual(applied)
+      await waitForExpect(async () => {
+        const consumption = await sudoEntitlementsAdmin.getEntitlementsForUser(
+          externalId,
+        )
+        expect(consumption.consumption).toHaveLength(0)
+        expect(consumption.entitlements).toEqual(applied)
+      })
 
       const entitledUser = await sudoEntitlementsAdmin.removeEntitledUser(
         externalId,
@@ -299,19 +304,23 @@ describe('sudo-entitlements-admin API integration tests', () => {
         },
       ])
 
-      await expect(
-        sudoEntitlementsAdmin.getEntitlementsForUser(externalId1),
-      ).resolves.toMatchObject({
-        consumption: [],
-        entitlements: applied[0],
-      })
+      await waitForExpect(() =>
+        expect(
+          sudoEntitlementsAdmin.getEntitlementsForUser(externalId1),
+        ).resolves.toMatchObject({
+          consumption: [],
+          entitlements: applied[0],
+        }),
+      )
 
-      await expect(
-        sudoEntitlementsAdmin.getEntitlementsForUser(externalId2),
-      ).resolves.toMatchObject({
-        consumption: [],
-        entitlements: applied[1],
-      })
+      await waitForExpect(() =>
+        expect(
+          sudoEntitlementsAdmin.getEntitlementsForUser(externalId2),
+        ).resolves.toMatchObject({
+          consumption: [],
+          entitlements: applied[1],
+        }),
+      )
 
       await expect(
         sudoEntitlementsAdmin.removeEntitledUser(externalId1),
@@ -350,11 +359,13 @@ describe('sudo-entitlements-admin API integration tests', () => {
         entitlementsSetName: name,
       })
 
-      const consumption = await sudoEntitlementsAdmin.getEntitlementsForUser(
-        externalId,
-      )
-      expect(consumption.consumption).toHaveLength(0)
-      expect(consumption.entitlements).toEqual(applied)
+      await waitForExpect(async () => {
+        const consumption = await sudoEntitlementsAdmin.getEntitlementsForUser(
+          externalId,
+        )
+        expect(consumption.consumption).toHaveLength(0)
+        expect(consumption.entitlements).toEqual(applied)
+      })
     })
 
     it('should be able to apply entitlements set to multiple users and retrieve entitlements consumption', async () => {
@@ -411,19 +422,23 @@ describe('sudo-entitlements-admin API integration tests', () => {
         entitlementsSetName: name2,
       })
 
-      await expect(
-        sudoEntitlementsAdmin.getEntitlementsForUser(externalId1),
-      ).resolves.toMatchObject({
-        consumption: [],
-        entitlements: applied[0],
-      })
+      await waitForExpect(() =>
+        expect(
+          sudoEntitlementsAdmin.getEntitlementsForUser(externalId1),
+        ).resolves.toMatchObject({
+          consumption: [],
+          entitlements: applied[0],
+        }),
+      )
 
-      await expect(
-        sudoEntitlementsAdmin.getEntitlementsForUser(externalId2),
-      ).resolves.toMatchObject({
-        consumption: [],
-        entitlements: applied[1],
-      })
+      await waitForExpect(() =>
+        expect(
+          sudoEntitlementsAdmin.getEntitlementsForUser(externalId2),
+        ).resolves.toMatchObject({
+          consumption: [],
+          entitlements: applied[1],
+        }),
+      )
     })
 
     it('should be able to apply entitlements sequence to multiple users and retrieve entitlements consumption', async () => {
@@ -503,19 +518,23 @@ describe('sudo-entitlements-admin API integration tests', () => {
         entitlementsSequenceName: name2,
       })
 
-      await expect(
-        sudoEntitlementsAdmin.getEntitlementsForUser(externalId1),
-      ).resolves.toMatchObject({
-        consumption: [],
-        entitlements: applied[0],
-      })
+      await waitForExpect(() =>
+        expect(
+          sudoEntitlementsAdmin.getEntitlementsForUser(externalId1),
+        ).resolves.toMatchObject({
+          consumption: [],
+          entitlements: applied[0],
+        }),
+      )
 
-      await expect(
-        sudoEntitlementsAdmin.getEntitlementsForUser(externalId2),
-      ).resolves.toMatchObject({
-        consumption: [],
-        entitlements: applied[1],
-      })
+      await waitForExpect(() =>
+        expect(
+          sudoEntitlementsAdmin.getEntitlementsForUser(externalId2),
+        ).resolves.toMatchObject({
+          consumption: [],
+          entitlements: applied[1],
+        }),
+      )
     })
 
     it('should be able to add and remove an entitlements sequence', async () => {
@@ -640,11 +659,12 @@ describe('sudo-entitlements-admin API integration tests', () => {
           expect(applied.transitionsRelativeTo).toBeUndefined()
         }
 
-        const consumption = await sudoEntitlementsAdmin.getEntitlementsForUser(
-          externalId,
-        )
-        expect(consumption.consumption).toHaveLength(0)
-        expect(consumption.entitlements).toEqual(applied)
+        await waitForExpect(async () => {
+          const consumption =
+            await sudoEntitlementsAdmin.getEntitlementsForUser(externalId)
+          expect(consumption.consumption).toHaveLength(0)
+          expect(consumption.entitlements).toEqual(applied)
+        })
       },
     )
 
