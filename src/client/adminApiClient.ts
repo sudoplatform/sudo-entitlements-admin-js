@@ -40,6 +40,8 @@ import {
   ApplyEntitlementsToUsersInput,
   ApplyEntitlementsToUsersMutation,
   EntitledUser,
+  EntitlementDefinition,
+  EntitlementDefinitionConnection,
   EntitlementsSequence,
   EntitlementsSequencesConnection,
   EntitlementsSet,
@@ -47,6 +49,9 @@ import {
   ExternalEntitlementsConsumption,
   ExternalUserEntitlements,
   ExternalUserEntitlementsResult,
+  GetEntitlementDefinitionDocument,
+  GetEntitlementDefinitionInput,
+  GetEntitlementDefinitionQuery,
   GetEntitlementsForUserDocument,
   GetEntitlementsForUserInput,
   GetEntitlementsForUserQuery,
@@ -56,6 +61,8 @@ import {
   GetEntitlementsSetDocument,
   GetEntitlementsSetInput,
   GetEntitlementsSetQuery,
+  ListEntitlementDefinitionsDocument,
+  ListEntitlementDefinitionsQuery,
   ListEntitlementsSequencesDocument,
   ListEntitlementsSequencesQuery,
   ListEntitlementsSetsDocument,
@@ -271,6 +278,52 @@ export class AdminApiClient {
       graphqlError = result.errors?.[0]
       if (!graphqlError) {
         return result.data.listEntitlementsSets
+      }
+    } catch (err) {
+      thrownError = err as Error
+    }
+
+    this.mapAndThrowError(graphqlError, thrownError)
+  }
+
+  public async getEntitlementDefinition(
+    input: GetEntitlementDefinitionInput,
+  ): Promise<EntitlementDefinition | null> {
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.query<GetEntitlementDefinitionQuery>({
+        query: GetEntitlementDefinitionDocument,
+        variables: { input },
+        fetchPolicy: queryFetchPolicy,
+      })
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        return result.data.getEntitlementDefinition ?? null
+      }
+    } catch (err) {
+      thrownError = err as Error
+    }
+
+    this.mapAndThrowError(graphqlError, thrownError)
+  }
+
+  public async listEntitlementDefinitions(
+    limit?: number,
+    nextToken?: string,
+  ): Promise<EntitlementDefinitionConnection> {
+    let graphqlError: GraphQLError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result = await this.client.query<ListEntitlementDefinitionsQuery>({
+        query: ListEntitlementDefinitionsDocument,
+        variables: { limit: limit, nextToken: nextToken ?? null },
+        fetchPolicy: queryFetchPolicy,
+      })
+
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        return result.data.listEntitlementDefinitions
       }
     } catch (err) {
       thrownError = err as Error

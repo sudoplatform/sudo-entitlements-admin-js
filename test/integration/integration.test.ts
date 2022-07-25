@@ -69,6 +69,32 @@ describe('sudo-entitlements-admin API integration tests', () => {
   const run = v4()
 
   describe('Read-only tests', () => {
+    it('should successfully read entitlement definitions', async () => {
+      expectBeforeAllComplete()
+
+      for (
+        let entitlementDefinitionsConnection =
+          await sudoEntitlementsAdmin.listEntitlementDefinitions();
+        entitlementDefinitionsConnection.nextToken;
+        entitlementDefinitionsConnection =
+          await sudoEntitlementsAdmin.listEntitlementDefinitions(
+            10,
+            entitlementDefinitionsConnection.nextToken,
+          )
+      ) {
+        for (const listedEntitlementsDefinition of entitlementDefinitionsConnection.items) {
+          const gottenEntitlementDefinition =
+            await sudoEntitlementsAdmin.getEntitlementDefinition(
+              listedEntitlementsDefinition.name,
+            )
+
+          expect(gottenEntitlementDefinition).toMatchObject({
+            name: listedEntitlementsDefinition.name,
+          })
+        }
+      }
+    })
+
     it('should successfully read entitlements sets', async () => {
       expectBeforeAllComplete()
 

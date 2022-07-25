@@ -69,6 +69,11 @@ import {
   RemoveEntitledUserDocument,
   ApplyEntitlementsSetToUsersMutation,
   ApplyEntitlementsSetToUsersDocument,
+  GetEntitlementDefinitionQuery,
+  EntitlementDefinition,
+  GetEntitlementDefinitionDocument,
+  ListEntitlementDefinitionsQuery,
+  ListEntitlementDefinitionsDocument,
 } from '../gen/graphqlTypes'
 import { AdminApiClient, AdminConsoleProject } from './adminApiClient'
 
@@ -106,6 +111,11 @@ describe('AdminApiClient test suite', () => {
 
   const now = Date.now()
   const externalId = 'external-id'
+  const entitlementDefinition: EntitlementDefinition = {
+    name: 'entitlement-definition',
+    type: 'numeric',
+    description: 'description for entitlement-definition',
+  }
   const userEntitlements: ExternalUserEntitlements & {
     __typename: 'ExternalUserEntitlements'
   } = {
@@ -315,6 +325,119 @@ describe('AdminApiClient test suite', () => {
       )
 
       await expect(adminApiClient.listEntitlementsSets()).rejects.toThrow(
+        new UnknownGraphQLError(error),
+      )
+    })
+  })
+
+  describe('getEntitlementDefinition tests', () => {
+    it('should return results', async () => {
+      when(
+        mockClient.query<GetEntitlementDefinitionQuery>(anything()),
+      ).thenResolve({
+        data: { getEntitlementDefinition: entitlementDefinition },
+        loading: false,
+        stale: false,
+        networkStatus: NetworkStatus.ready,
+      })
+
+      await expect(
+        adminApiClient.getEntitlementDefinition({
+          name: entitlementDefinition.name,
+        }),
+      ).resolves.toEqual(entitlementDefinition)
+
+      const [actualQuery] = capture(mockClient.query as any).first()
+      expect(actualQuery).toEqual({
+        query: GetEntitlementDefinitionDocument,
+        variables: { input: { name: entitlementDefinition.name } },
+        fetchPolicy: 'network-only',
+      })
+      verify(mockClient.query(anything())).once()
+    })
+
+    it.each`
+      result
+      ${undefined}
+      ${null}
+    `('should return null for result $result', async ({ result }) => {
+      when(
+        mockClient.query<GetEntitlementDefinitionQuery>(anything()),
+      ).thenResolve({
+        data: { getEntitlementDefinition: result },
+        loading: false,
+        stale: false,
+        networkStatus: NetworkStatus.ready,
+      })
+
+      await expect(
+        adminApiClient.getEntitlementDefinition({
+          name: entitlementDefinition.name,
+        }),
+      ).resolves.toEqual(null)
+
+      const [actualQuery] = capture(mockClient.query as any).first()
+      expect(actualQuery).toEqual({
+        query: GetEntitlementDefinitionDocument,
+        variables: { input: { name: entitlementDefinition.name } },
+        fetchPolicy: 'network-only',
+      })
+      verify(mockClient.query(anything())).once()
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.query<GetEntitlementDefinitionQuery>(anything()),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.getEntitlementDefinition({
+          name: entitlementDefinition.name,
+        }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
+    })
+  })
+
+  describe('listEntitlementDefinitions tests', () => {
+    it('should return results', async () => {
+      when(
+        mockClient.query<ListEntitlementDefinitionsQuery>(anything()),
+      ).thenResolve({
+        data: {
+          listEntitlementDefinitions: {
+            items: [entitlementDefinition],
+          },
+        },
+        loading: false,
+        stale: false,
+        networkStatus: NetworkStatus.ready,
+      })
+
+      await expect(
+        adminApiClient.listEntitlementDefinitions(),
+      ).resolves.toEqual({
+        items: [entitlementDefinition],
+      })
+
+      const [actualQuery] = capture(mockClient.query as any).first()
+      expect(actualQuery).toEqual({
+        query: ListEntitlementDefinitionsDocument,
+        variables: { nextToken: null },
+        fetchPolicy: 'network-only',
+      })
+      verify(mockClient.query(anything())).once()
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.query<ListEntitlementDefinitionsQuery>(anything()),
+      ).thenReject(error)
+
+      await expect(adminApiClient.listEntitlementDefinitions()).rejects.toThrow(
         new UnknownGraphQLError(error),
       )
     })

@@ -12,6 +12,7 @@ import {
   SudoEntitlementsAdminClient,
 } from '..'
 import { AdminApiClient } from '../client/adminApiClient'
+import { EntitlementDefinitionTransformer } from '../data/transformers/entitlementDefinitionTransformer'
 import { EntitlementsSequenceTransformer } from '../data/transformers/entitlementsSequenceTransformer'
 import { EntitlementsSequenceTransitionTransformer } from '../data/transformers/entitlementsSequenceTransitionTransformer'
 import { EntitlementsSetTransformer } from '../data/transformers/entitlementsSetTransformer'
@@ -21,6 +22,7 @@ import { ExternalUserEntitlementsTransformer } from '../data/transformers/extern
 import { InvalidEntitlementsError } from '../global/error'
 import { DefaultSudoEntitlementsAdminClientPrivateOptions } from '../private/defaultSudoEntitlementsAdminClientPrivateOptions'
 import {
+  EntitlementDefinition,
   EntitlementsSequence,
   EntitlementsSequenceTransition,
   EntitlementsSet,
@@ -47,6 +49,11 @@ describe('SudoEntitlementsAdminClient test suite', () => {
 
   const now = new Date()
   const externalId = 'external-id'
+  const entitlementDefinition: EntitlementDefinition = {
+    name: 'entitlement-definition',
+    type: 'numeric',
+    description: 'description for entitlement-definition',
+  }
   const userEntitlements: ExternalUserEntitlements = {
     createdAt: now,
     updatedAt: now,
@@ -177,6 +184,98 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       ).first()
       expect(actualNextToken).toEqual(nextToken)
       verify(mockAdminApiClient.listEntitlementsSets(anything())).once()
+    })
+  })
+
+  describe('getEntitlementDefinition tests', () => {
+    it('should return entitlements', async () => {
+      when(mockAdminApiClient.getEntitlementDefinition(anything())).thenResolve(
+        EntitlementDefinitionTransformer.toGraphQL(entitlementDefinition),
+      )
+      await expect(
+        sudoEntitlementsAdminClient.getEntitlementDefinition(
+          entitlementDefinition.name,
+        ),
+      ).resolves.toEqual(entitlementDefinition)
+
+      const [actualInput] = capture(
+        mockAdminApiClient.getEntitlementDefinition,
+      ).first()
+      expect(actualInput).toEqual({ name: entitlementDefinition.name })
+      verify(mockAdminApiClient.getEntitlementDefinition(anything())).once()
+    })
+
+    it.each`
+      result
+      ${undefined}
+      ${null}
+    `('should return undefined for result $result', async ({ result }) => {
+      when(mockAdminApiClient.getEntitlementDefinition(anything())).thenResolve(
+        result,
+      )
+      await expect(
+        sudoEntitlementsAdminClient.getEntitlementDefinition(
+          entitlementDefinition.name,
+        ),
+      ).resolves.toBeUndefined()
+
+      const [actualInput] = capture(
+        mockAdminApiClient.getEntitlementDefinition,
+      ).first()
+      expect(actualInput).toEqual({ name: entitlementDefinition.name })
+      verify(mockAdminApiClient.getEntitlementDefinition(anything())).once()
+    })
+  })
+
+  describe('listEntitlementDefinitions tests', () => {
+    it('should return entitlements for initial call', async () => {
+      when(
+        mockAdminApiClient.listEntitlementDefinitions(anything(), anything()),
+      ).thenResolve({
+        items: [
+          EntitlementDefinitionTransformer.toGraphQL(entitlementDefinition),
+        ],
+      })
+
+      await expect(
+        sudoEntitlementsAdminClient.listEntitlementDefinitions(),
+      ).resolves.toEqual({ items: [entitlementDefinition] })
+
+      const [actualLimit, actualNextToken] = capture(
+        mockAdminApiClient.listEntitlementDefinitions,
+      ).first()
+      expect(actualLimit).toBeUndefined()
+      expect(actualNextToken).toBeUndefined()
+      verify(
+        mockAdminApiClient.listEntitlementDefinitions(anything(), anything()),
+      ).once()
+    })
+
+    it('should return entitlements for subsequent call', async () => {
+      const nextToken = 'next-token'
+      const limit = 10
+      when(
+        mockAdminApiClient.listEntitlementDefinitions(anything(), anything()),
+      ).thenResolve({
+        items: [
+          EntitlementDefinitionTransformer.toGraphQL(entitlementDefinition),
+        ],
+      })
+      await expect(
+        sudoEntitlementsAdminClient.listEntitlementDefinitions(
+          limit,
+          nextToken,
+        ),
+      ).resolves.toEqual({ items: [entitlementDefinition] })
+
+      const [actualLimit, actualNextToken] = capture(
+        mockAdminApiClient.listEntitlementDefinitions,
+      ).first()
+      expect(actualLimit).toEqual(limit)
+      expect(actualNextToken).toEqual(nextToken)
+      verify(
+        mockAdminApiClient.listEntitlementDefinitions(anything(), anything()),
+      ).once()
     })
   })
 

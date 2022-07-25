@@ -9,3 +9,4 @@ yalc.lock
 coverage
 .env
 package.json.old
+.DS_Store

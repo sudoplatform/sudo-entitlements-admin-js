@@ -28,6 +28,7 @@ export type Scalars = {
   AWSTime: any
   AWSTimestamp: any
   AWSURL: any
+  EntitlementType: 'numeric' | 'boolean'
 }
 
 export type AddEntitlementsSequenceInput = {
@@ -97,6 +98,19 @@ export type EntitlementConsumption = {
   lastConsumedAtEpochMs?: Maybe<Scalars['Float']>
   name: Scalars['String']
   value: Scalars['Int']
+}
+
+export type EntitlementDefinition = {
+  __typename?: 'EntitlementDefinition'
+  description?: Maybe<Scalars['String']>
+  name: Scalars['String']
+  type: Scalars['EntitlementType']
+}
+
+export type EntitlementDefinitionConnection = {
+  __typename?: 'EntitlementDefinitionConnection'
+  items: Array<EntitlementDefinition>
+  nextToken?: Maybe<Scalars['String']>
 }
 
 export type EntitlementInput = {
@@ -181,6 +195,10 @@ export type ExternalUserEntitlementsError = {
 export type ExternalUserEntitlementsResult =
   | ExternalUserEntitlements
   | ExternalUserEntitlementsError
+
+export type GetEntitlementDefinitionInput = {
+  name: Scalars['String']
+}
 
 export type GetEntitlementsForUserInput = {
   externalId: Scalars['String']
@@ -269,11 +287,17 @@ export type MutationSetEntitlementsSetArgs = {
 
 export type Query = {
   __typename?: 'Query'
+  getEntitlementDefinition?: Maybe<EntitlementDefinition>
   getEntitlementsForUser: ExternalEntitlementsConsumption
   getEntitlementsSequence?: Maybe<EntitlementsSequence>
   getEntitlementsSet?: Maybe<EntitlementsSet>
+  listEntitlementDefinitions: EntitlementDefinitionConnection
   listEntitlementsSequences: EntitlementsSequencesConnection
   listEntitlementsSets: EntitlementsSetsConnection
+}
+
+export type QueryGetEntitlementDefinitionArgs = {
+  input: GetEntitlementDefinitionInput
 }
 
 export type QueryGetEntitlementsForUserArgs = {
@@ -286,6 +310,11 @@ export type QueryGetEntitlementsSequenceArgs = {
 
 export type QueryGetEntitlementsSetArgs = {
   input: GetEntitlementsSetInput
+}
+
+export type QueryListEntitlementDefinitionsArgs = {
+  limit?: InputMaybe<Scalars['Int']>
+  nextToken?: InputMaybe<Scalars['String']>
 }
 
 export type QueryListEntitlementsSequencesArgs = {
@@ -546,6 +575,13 @@ export type EntitlementConsumptionFragment = {
   lastConsumedAtEpochMs?: number | null
 }
 
+export type EntitlementDefinitionFragment = {
+  __typename?: 'EntitlementDefinition'
+  name: string
+  description?: string | null
+  type: 'numeric' | 'boolean'
+}
+
 export type EntitlementsSequenceFragment = {
   __typename?: 'EntitlementsSequence'
   name: string
@@ -652,6 +688,20 @@ export type ExternalUserEntitlementsErrorFragment = {
   error: string
 }
 
+export type GetEntitlementDefinitionQueryVariables = Exact<{
+  input: GetEntitlementDefinitionInput
+}>
+
+export type GetEntitlementDefinitionQuery = {
+  __typename?: 'Query'
+  getEntitlementDefinition?: {
+    __typename?: 'EntitlementDefinition'
+    name: string
+    description?: string | null
+    type: 'numeric' | 'boolean'
+  } | null
+}
+
 export type GetEntitlementsForUserQueryVariables = Exact<{
   input: GetEntitlementsForUserInput
 }>
@@ -730,6 +780,25 @@ export type GetEntitlementsSetQuery = {
       value: number
     }>
   } | null
+}
+
+export type ListEntitlementDefinitionsQueryVariables = Exact<{
+  limit?: InputMaybe<Scalars['Int']>
+  nextToken?: InputMaybe<Scalars['String']>
+}>
+
+export type ListEntitlementDefinitionsQuery = {
+  __typename?: 'Query'
+  listEntitlementDefinitions: {
+    __typename?: 'EntitlementDefinitionConnection'
+    nextToken?: string | null
+    items: Array<{
+      __typename?: 'EntitlementDefinition'
+      name: string
+      description?: string | null
+      type: 'numeric' | 'boolean'
+    }>
+  }
 }
 
 export type ListEntitlementsSequencesQueryVariables = Exact<{
@@ -881,6 +950,27 @@ export type SetEntitlementsSetMutation = {
   }
 }
 
+export const EntitlementDefinitionFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementDefinition' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementDefinition' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EntitlementDefinitionFragment, unknown>
 export const EntitlementsSequenceTransitionFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -1764,6 +1854,64 @@ export const ApplyEntitlementsToUsersDocument = {
   ApplyEntitlementsToUsersMutation,
   ApplyEntitlementsToUsersMutationVariables
 >
+export const GetEntitlementDefinitionDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetEntitlementDefinition' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'GetEntitlementDefinitionInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'getEntitlementDefinition' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EntitlementDefinition' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...EntitlementDefinitionFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  GetEntitlementDefinitionQuery,
+  GetEntitlementDefinitionQueryVariables
+>
 export const GetEntitlementsForUserDocument = {
   kind: 'Document',
   definitions: [
@@ -1940,6 +2088,84 @@ export const GetEntitlementsSetDocument = {
 } as unknown as DocumentNode<
   GetEntitlementsSetQuery,
   GetEntitlementsSetQueryVariables
+>
+export const ListEntitlementDefinitionsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListEntitlementDefinitions' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'limit' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'nextToken' },
+          },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'listEntitlementDefinitions' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'limit' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'limit' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'nextToken' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'nextToken' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'items' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'EntitlementDefinition' },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'nextToken' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    ...EntitlementDefinitionFragmentDoc.definitions,
+  ],
+} as unknown as DocumentNode<
+  ListEntitlementDefinitionsQuery,
+  ListEntitlementDefinitionsQueryVariables
 >
 export const ListEntitlementsSequencesDocument = {
   kind: 'Document',

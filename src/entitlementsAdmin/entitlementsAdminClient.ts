@@ -1,4 +1,6 @@
 import { AdminApiClient } from '../client/adminApiClient'
+import { EntitlementDefinitionConnectionTransformer } from '../data/transformers/entitlementDefinitionConnectionTransformer'
+import { EntitlementDefinitionTransformer } from '../data/transformers/entitlementDefinitionTransformer'
 import { EntitlementsSequencesConnectionTransformer } from '../data/transformers/entitlementsSequencesConnectionTransformer'
 import { EntitlementsSequenceTransformer } from '../data/transformers/entitlementsSequenceTransformer'
 import { EntitlementsSequenceTransitionTransformer } from '../data/transformers/entitlementsSequenceTransitionTransformer'
@@ -34,6 +36,26 @@ export interface Entitlement {
    * Value of the entitlement.
    */
   value: number
+}
+
+/**
+ * Representation of an entitlement definition
+ */
+export interface EntitlementDefinition {
+  /**
+   * Name of the entitlement
+   */
+  name: string
+
+  /**
+   * Description, if any, of the entitlement
+   */
+  description?: string
+
+  /**
+   * Type of the entitlement.
+   */
+  type: 'numeric' | 'boolean'
 }
 
 /**
@@ -109,6 +131,22 @@ export interface EntitlementsSetsConnection {
   /**
    * If defined, a further call to listEntitlementsSets is required
    * to complete the full list of entitlements sets.
+   */
+  nextToken?: string
+}
+
+/**
+ * Paginated entitlement definition result
+ */
+export interface EntitlementDefinitionConnection {
+  /**
+   * Entitlements definitions in this page.
+   */
+  items: EntitlementDefinition[]
+
+  /**
+   * If defined, a further call to listEntitlementDefinitions is required
+   * to complete the full list of entitlements definitions.
    */
   nextToken?: string
 }
@@ -354,6 +392,33 @@ export interface SudoEntitlementsAdminClient {
    * @returns Paginated list of entitlements sets
    */
   listEntitlementsSets(token?: string): Promise<EntitlementsSetsConnection>
+
+  /**
+   * Get an entitlement definition by entitlement name
+   *
+   * @param name Name of the entitlement definition to return
+   *
+   * @returns Named entitlements definition or undefined if no entitlement
+   *          definition of the specified name has been defined.
+   */
+  getEntitlementDefinition(
+    name: string,
+  ): Promise<EntitlementDefinition | undefined>
+
+  /**
+   * List all entitlement definitions
+   *
+   * Call again with a token parameter to continue paginated listing
+   *
+   * @param limit number of entitlement definitions to be returned per call
+   * @param nextToken Optional token from which to continue listing
+   *
+   * @returns Paginated list of entitlement definitions
+   */
+  listEntitlementDefinitions(
+    limit?: number,
+    nextToken?: string,
+  ): Promise<EntitlementDefinitionConnection>
 
   /**
    * Get entitlements for a user
@@ -668,6 +733,30 @@ export class DefaultSudoEntitlementsAdminClient
       await this.adminApiClient.listEntitlementsSets(nextToken)
     return EntitlementsSetsConnectionTransformer.toClient(
       entitlementsSetsConnection,
+    )
+  }
+
+  async getEntitlementDefinition(
+    name: string,
+  ): Promise<EntitlementDefinition | undefined> {
+    const entitlementDefinition =
+      await this.adminApiClient.getEntitlementDefinition({
+        name,
+      })
+    if (!entitlementDefinition) {
+      return undefined
+    }
+    return EntitlementDefinitionTransformer.toClient(entitlementDefinition)
+  }
+
+  async listEntitlementDefinitions(
+    limit?: number,
+    nextToken?: string,
+  ): Promise<EntitlementDefinitionConnection> {
+    const entitlementDefinitionConnection =
+      await this.adminApiClient.listEntitlementDefinitions(limit, nextToken)
+    return EntitlementDefinitionConnectionTransformer.toClient(
+      entitlementDefinitionConnection,
     )
   }
 

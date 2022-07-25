@@ -1,0 +1,5 @@
+query GetEntitlementDefinition($input: GetEntitlementDefinitionInput!) {
+  getEntitlementDefinition(input: $input) {
+    ...EntitlementDefinition
+  }
+}
