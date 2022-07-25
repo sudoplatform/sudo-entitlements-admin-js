@@ -427,7 +427,7 @@ export interface SudoEntitlementsAdminClient {
    *
    * @returns Entitlements consumption for the user.
    *
-   * @throws {@link NoEntitlementsError}
+   * @throws NoEntitlementsError
    *  - The user has no entitlements defined
    */
   getEntitlementsForUser(
@@ -527,14 +527,11 @@ export interface SudoEntitlementsAdminClient {
    *
    * @returns The effective entitlements for the user
    *
-   * @throws {@link EntitlementSetNotFoundError}
+   * @throws EntitlementSetNotFoundError
    *  - If the named entitlements set does not exist
    *
    * @throws {@link AlreadyUpdatedError}
    *  - if the user's entitlements have been updated with a later version
-   *
-   * @throws {@link EntitlementSetNotFoundError}
-   * - If the entitlements set named is not defined
    */
   applyEntitlementsSetToUser(
     externalId: string,
@@ -553,14 +550,11 @@ export interface SudoEntitlementsAdminClient {
    *
    * @returns The effective entitlements for the user
    *
-   * @throws {@link EntitlementSetNotFoundError}
+   * @throws EntitlementSetNotFoundError
    *  - If the named entitlements set does not exist
    *
    * @throws {@link AlreadyUpdatedError}
    *  - if the user's entitlements have been updated with a later version
-   *
-   * @throws {@link EntitlementSetNotFoundError}
-   * - If the entitlements set named is not defined
    */
   applyEntitlementsSetToUsers(
     operations: {
@@ -601,7 +595,7 @@ export interface SudoEntitlementsAdminClient {
    *
    * @returns The created entitlements sequence
    *
-   * @throws {@link InvalidArgumentError}
+   * @throws InvalidArgumentError
    *  - if the specified entitlements sequence name is invalid
    */
   addEntitlementsSequence(
@@ -618,7 +612,7 @@ export interface SudoEntitlementsAdminClient {
    *
    * @returns The updated entitlements sequence
    *
-   * @throws {@link InvalidArgumentError}
+   * @throws InvalidArgumentError
    *  - if the specified entitlements sequence name is invalid
    */
   setEntitlementsSequence(
