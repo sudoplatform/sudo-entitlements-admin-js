@@ -8,11 +8,12 @@ module.exports = {
       env: { node: true },
     },
     {
-      files: ['**/*.ts'],
-      plugins: ['@typescript-eslint', 'import', 'prettier'],
+      files: ['src/**/*.ts'],
+      excludedFiles: ['**/*.spec.ts'],
+      plugins: ['@typescript-eslint', 'import', 'prettier', 'tree-shaking'],
       parser: '@typescript-eslint/parser',
       parserOptions: {
-        project: './tsconfig.test.json'
+        project: './tsconfig.test.json',
       },
       extends: [
         'plugin:@typescript-eslint/recommended',
@@ -50,9 +51,10 @@ module.exports = {
         '@typescript-eslint/unbound-method': [
           'error',
           {
-            'ignoreStatic': true
-          }
-        ]
+            ignoreStatic: true,
+          },
+        ],
+        'tree-shaking/no-side-effects-in-initialization': 2,
       },
     },
     {
@@ -62,13 +64,10 @@ module.exports = {
       },
     },
     {
-      files: [
-        '**/*.spec.ts',
-        '**/test/**/*.ts'
-      ],
+      files: ['**/*.spec.ts', 'test/**/*.ts'],
       parser: '@typescript-eslint/parser',
       parserOptions: {
-        project: './tsconfig.test.json'
+        project: './tsconfig.test.json',
       },
       extends: [
         'plugin:@typescript-eslint/recommended',
@@ -85,7 +84,7 @@ module.exports = {
         '@typescript-eslint/no-unsafe-member-access': 'off',
         '@typescript-eslint/restrict-plus-operands': 'off',
         '@typescript-eslint/restrict-template-expressions': 'off',
-        '@typescript-eslint/unbound-method': 'off'
+        '@typescript-eslint/unbound-method': 'off',
       },
     },
   ],

@@ -17,10 +17,12 @@
       "statements": 90,
       "branches": 0,
       "functions": 90,
-      "lines": 90,
-      "ts-jest": {
-        "tsConfig": "tsconfig.test.json"
-      }
+      "lines": 90
+    }
+  },
+  "globals": {
+    "ts-jest": {
+      "tsconfig": "tsconfig.test.json"
     }
   }
 }

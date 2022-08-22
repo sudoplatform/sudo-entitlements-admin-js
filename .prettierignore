@@ -1,0 +1,9 @@
+lib/
+cjs/
+coverage/
+node_modules/
+docs/
+.yarn/
+.vscode/
+config/
+coverage/

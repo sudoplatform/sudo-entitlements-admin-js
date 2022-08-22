@@ -106,6 +106,7 @@ export interface AdminApiClientProps {
 const mutationFetchPolicy = 'no-cache'
 const queryFetchPolicy = 'network-only'
 
+// eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
 export const AdminConsoleProject = t.type({
   region: t.string,
   apiUrl: t.string,

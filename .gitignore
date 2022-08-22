@@ -2,6 +2,7 @@
 config
 docs
 lib
+cjs
 node_modules
 yarn-error.log
 .yalc
