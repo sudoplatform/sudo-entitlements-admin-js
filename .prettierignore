@@ -1,5 +1,7 @@
 lib/
 cjs/
+types/
+typings/
 coverage/
 node_modules/
 docs/

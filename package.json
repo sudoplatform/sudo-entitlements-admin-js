@@ -17,21 +17,30 @@
     "verify": "yarn audit-with-suppressions && yarn lint && yarn unit-test",
     "unit-test": "jest --verbose --coverage src",
     "integration-test": "jest test/integration",
-    "clean": "rm -rf lib docs",
+    "clean": "yarn rimraf ./docs ./lib ./cjs ./types",
     "build": "yarn codegen && yarn verify && yarn build:transpile && yarn build:docs",
-    "build:transpile": "concurrently \"yarn build:transpile:cjs\" \"yarn build:transpile:esm\"",
+    "build:transpile": "concurrently \"yarn build:transpile:declarations\" \"yarn build:transpile:cjs\" \"yarn build:transpile:esm\"",
     "build:transpile:cjs": "tsc --project tsconfig.commonjs.json",
     "build:transpile:esm": "tsc",
+    "build:transpile:declarations": "tsc --project tsconfig.declarations.json",
     "build:docs": "typedoc --treatWarningsAsErrors --excludePrivate --out docs src/index.ts"
   },
   "main": "./cjs/index.js",
-  "types": "./cjs/index.d.ts",
-  "module": "./lib/index.js",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./lib/index.js",
+      "require": "./cjs/index.js",
+      "default": "./lib/index.js"
+    }
+  },
   "sideEffects": false,
   "files": [
     "cjs",
     "lib",
-    "docs"
+    "docs",
+    "types"
   ],
   "peerDependencies": {
     "@sudoplatform/sudo-common": "^8.0.0"
@@ -72,11 +81,12 @@
     "@graphql-codegen/typescript": "^2.7.2",
     "@graphql-codegen/typescript-operations": "^2.5.2",
     "@graphql-tools/utils": "^8.8.0",
-    "@sudoplatform/sudo-common": "^8.0.0",
+    "@sudoplatform/sudo-common": "^8.0.1",
+    "@sudoplatform/sudo-user": "^12.0.2",
     "@types/jest": "^27.5.2",
     "@types/uuid": "^8.3.4",
-    "@typescript-eslint/eslint-plugin": "^5.30.7",
-    "@typescript-eslint/parser": "^5.30.7",
+    "@typescript-eslint/eslint-plugin": "^5.34.0",
+    "@typescript-eslint/parser": "^5.34.0",
     "apollo-client": "^2.6.10",
     "concurrently": "^7.3.0",
     "dotenv": "^16.0.1",
@@ -89,6 +99,7 @@
     "isomorphic-fetch": "^2.2.1",
     "jest": "^27.5.1",
     "prettier": "^2.7.1",
+    "rimraf": "^3.0.2",
     "ts-jest": "^27.1.5",
     "ts-mockito": "^2.6.1",
     "typedoc": "^0.23.9",
