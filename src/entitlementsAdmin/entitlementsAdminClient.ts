@@ -222,6 +222,27 @@ export interface EntitlementsSequencesConnection {
 }
 
 /**
+ * ID of individual entitlement consumer. A different
+ * consumer is specified for each consumption record
+ * for "per something" entitlements. The issuer, identifies
+ * the source of the consumer. For example, consumption of
+ * a "per Sudo" entitlement will have a consumption record
+ * for each Sudo that has consumed the entitlement with a
+ * consumer identifying each such Sudo.
+ */
+export interface EntitlementConsumer {
+  /**
+   * ID of the consumer
+   */
+  id: string
+
+  /**
+   * Issuing service of the ID.
+   */
+  issuer: string
+}
+
+/**
  * Entitlement consumption information
  */
 export interface EntitlementConsumption {
@@ -253,6 +274,12 @@ export interface EntitlementConsumption {
    * The most recent time at which this entitlement was consumed
    */
   lastConsumedAtEpochMs?: number
+
+  /**
+   * Consumer to whom this record pertains.
+   * If not present, consumption is at the user level.
+   */
+  consumer?: EntitlementConsumer
 }
 
 /**

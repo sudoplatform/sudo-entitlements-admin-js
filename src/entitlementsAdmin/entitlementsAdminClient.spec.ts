@@ -78,6 +78,10 @@ describe('SudoEntitlementsAdminClient test suite', () => {
         consumed: 2,
         firstConsumedAtEpochMs: 1,
         lastConsumedAtEpochMs: 2,
+        consumer: {
+          id: 'consumer-1',
+          issuer: 'issuer-1',
+        },
       },
     ],
   }

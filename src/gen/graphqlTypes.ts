@@ -573,6 +573,11 @@ export type EntitlementConsumptionFragment = {
   available: number
   firstConsumedAtEpochMs?: number | null
   lastConsumedAtEpochMs?: number | null
+  consumer?: {
+    __typename?: 'EntitlementConsumer'
+    id: string
+    issuer: string
+  } | null
 }
 
 export type EntitlementDefinitionFragment = {
@@ -662,6 +667,11 @@ export type ExternalEntitlementsConsumptionFragment = {
     available: number
     firstConsumedAtEpochMs?: number | null
     lastConsumedAtEpochMs?: number | null
+    consumer?: {
+      __typename?: 'EntitlementConsumer'
+      id: string
+      issuer: string
+    } | null
   }>
 }
 
@@ -735,6 +745,11 @@ export type GetEntitlementsForUserQuery = {
       available: number
       firstConsumedAtEpochMs?: number | null
       lastConsumedAtEpochMs?: number | null
+      consumer?: {
+        __typename?: 'EntitlementConsumer'
+        id: string
+        issuer: string
+      } | null
     }>
   }
 }
@@ -1198,6 +1213,17 @@ export const EntitlementConsumptionFragmentDoc = {
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'lastConsumedAtEpochMs' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'consumer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
           },
         ],
       },

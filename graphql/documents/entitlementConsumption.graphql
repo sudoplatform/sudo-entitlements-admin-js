@@ -5,4 +5,8 @@ fragment EntitlementConsumption on EntitlementConsumption {
   available
   firstConsumedAtEpochMs
   lastConsumedAtEpochMs
+  consumer {
+    id
+    issuer
+  }
 }

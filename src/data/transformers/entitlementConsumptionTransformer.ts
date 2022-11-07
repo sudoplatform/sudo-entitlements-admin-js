@@ -1,5 +1,6 @@
 import { EntitlementConsumption as EntitlementConsumptionClient } from '../../entitlementsAdmin/entitlementsAdminClient'
 import { EntitlementConsumption as EntitlementConsumptionGraphQL } from '../../gen/graphqlTypes'
+import { EntitlementConsumerTransformer } from './entitlementConsumerTransformer'
 
 export class EntitlementConsumptionTransformer {
   public static toClient(
@@ -12,6 +13,9 @@ export class EntitlementConsumptionTransformer {
       consumed: graphql.consumed,
       firstConsumedAtEpochMs: graphql.firstConsumedAtEpochMs ?? undefined,
       lastConsumedAtEpochMs: graphql.lastConsumedAtEpochMs ?? undefined,
+      consumer: graphql.consumer
+        ? EntitlementConsumerTransformer.toClient(graphql.consumer)
+        : undefined,
     }
   }
   public static toGraphQL(
@@ -24,6 +28,9 @@ export class EntitlementConsumptionTransformer {
       consumed: client.consumed,
       firstConsumedAtEpochMs: client.firstConsumedAtEpochMs,
       lastConsumedAtEpochMs: client.lastConsumedAtEpochMs,
+      consumer: client.consumer
+        ? EntitlementConsumerTransformer.toGraphQL(client.consumer)
+        : undefined,
     }
   }
 }
