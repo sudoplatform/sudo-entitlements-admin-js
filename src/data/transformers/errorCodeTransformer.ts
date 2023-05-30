@@ -2,6 +2,7 @@ import { mapGraphQLToClientError } from '@sudoplatform/sudo-common'
 import {
   AlreadyUpdatedError,
   BulkOperationDuplicateUsersError,
+  DuplicateEntitlementError,
   EntitlementsSequenceAlreadyExistsError,
   EntitlementsSequenceNotFoundError,
   EntitlementsSequenceUpdateInProgressError,
@@ -10,6 +11,7 @@ import {
   EntitlementsSetInUseError,
   EntitlementsSetNotFoundError,
   InvalidEntitlementsError,
+  NegativeEntitlementError,
 } from '../../global/error'
 
 export class ErrorCodeTransformer {
@@ -46,6 +48,12 @@ export class ErrorCodeTransformer {
         }
         case 'InvalidEntitlementsError': {
           return new InvalidEntitlementsError()
+        }
+        case 'NegativeEntitlementError': {
+          return new NegativeEntitlementError()
+        }
+        case 'DuplicateEntitlementError': {
+          return new DuplicateEntitlementError()
         }
       }
     }

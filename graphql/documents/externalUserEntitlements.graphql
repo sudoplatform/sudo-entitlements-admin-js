@@ -9,5 +9,8 @@ fragment ExternalUserEntitlements on ExternalUserEntitlements {
   entitlements {
     ...Entitlement
   }
+  expendableEntitlements {
+    ...Entitlement
+  }
   transitionsRelativeToEpochMs
 }

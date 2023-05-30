@@ -56,6 +56,11 @@ export interface EntitlementDefinition {
    * Type of the entitlement.
    */
   type: 'numeric' | 'boolean'
+
+  /**
+   * Whether or not this entitlement is expendable
+   */
+  expendable: boolean
 }
 
 /**
@@ -343,6 +348,11 @@ export interface ExternalUserEntitlements {
   entitlements: Entitlement[]
 
   /**
+   * User's expendable entitlements.
+   */
+  expendableEntitlements: Entitlement[]
+
+  /**
    * Date from when user's transitions should
    * be calculated. Defaults to current time.
    */
@@ -589,6 +599,38 @@ export interface SudoEntitlementsAdminClient {
       entitlementsSetName: string
     }[],
   ): Promise<ExternalUserEntitlementsResult[]>
+
+  /**
+   * Apply an expendable entitlements delta to a user
+   *
+   * If a record for the user's entitlements does not yet exist a
+   * NoEntitlementsForUserError is thrown. Call an applyEntitlements*
+   * method to assign entitlements before calling this method.
+   *
+   * @param externalId External IDP user ID of user to retrieve entitlements for
+   * @param expendableEntitlements The expendable entitlements delta to apply to the user
+   * @param requestId
+   *     Request of this delta. Repetition of requests for the same external ID with the
+   *     same requestId are idempotent
+   *
+   * @returns The effective entitlements for the user
+   *
+   * @throws InvalidEntitlementsError
+   *    Entitlements contains one or more entitlements with unrecognized names
+   *    or that are not expendable entitlements.
+   * @throws NoEntitlementsForUserError
+   *    User has not previously been assigned entitlements.
+   * @throws DuplicateEntitlementError
+   *    expendableEntitlements refers to the same entitlement more than once.
+   * @throws NegativeEntitlementError
+   *    expendableEntitlements would cause an expendable entitlement for the user
+   *    to go negative.
+   */
+  applyExpendableEntitlementsToUser(
+    externalId: string,
+    expendableEntitlements: Entitlement[],
+    requestId: string,
+  ): Promise<ExternalUserEntitlements>
 
   /**
    * Get an entitlements sequence
@@ -981,6 +1023,20 @@ export class DefaultSudoEntitlementsAdminClient
       })),
     })
     return results.map(ExternalUserEntitlementsResultTransformer.toClient)
+  }
+
+  async applyExpendableEntitlementsToUser(
+    externalId: string,
+    expendableEntitlements: Entitlement[],
+    requestId: string,
+  ): Promise<ExternalUserEntitlements> {
+    const userEntitlements =
+      await this.adminApiClient.applyExpendableEntitlementsToUser({
+        externalId,
+        expendableEntitlements,
+        requestId,
+      })
+    return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
   }
 
   async removeEntitledUser(

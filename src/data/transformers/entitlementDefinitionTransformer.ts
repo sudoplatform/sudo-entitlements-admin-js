@@ -9,6 +9,7 @@ export class EntitlementDefinitionTransformer {
       name: graphql.name,
       description: graphql.description ?? undefined,
       type: graphql.type,
+      expendable: graphql.expendable,
     }
   }
   public static toGraphQL(
@@ -18,6 +19,7 @@ export class EntitlementDefinitionTransformer {
       name: client.name,
       description: client.description,
       type: client.type,
+      expendable: client.expendable,
     }
   }
 }

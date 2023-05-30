@@ -53,13 +53,17 @@ describe('SudoEntitlementsAdminClient test suite', () => {
     name: 'entitlement-definition',
     type: 'numeric',
     description: 'description for entitlement-definition',
+    expendable: false,
   }
+  const requestId = 'request-id'
+
   const userEntitlements: ExternalUserEntitlements = {
     createdAt: now,
     updatedAt: now,
     version: 1,
     externalId,
     entitlements: [{ name: 'entitlement-name', value: 1 }],
+    expendableEntitlements: [{ name: 'expendable-name', value: 1 }],
   }
   const entitlementsSet: EntitlementsSet = {
     createdAt: now,
@@ -517,6 +521,38 @@ describe('SudoEntitlementsAdminClient test suite', () => {
           },
         ],
       })
+    })
+  })
+
+  describe('applyExpendableEntitlementsToUser tests', () => {
+    it('should return entitlements', async () => {
+      when(
+        mockAdminApiClient.applyExpendableEntitlementsToUser(anything()),
+      ).thenResolve(
+        ExternalUserEntitlementsTransformer.toGraphQL(userEntitlements),
+      )
+
+      await expect(
+        sudoEntitlementsAdminClient.applyExpendableEntitlementsToUser(
+          externalId,
+          entitlementsSet.entitlements,
+          requestId,
+        ),
+      ).resolves.toEqual(userEntitlements)
+
+      const [actualInput] = capture(
+        mockAdminApiClient.applyExpendableEntitlementsToUser,
+      ).first()
+      expect(actualInput).toEqual({
+        externalId,
+        expendableEntitlements: entitlementsSet.entitlements.map(
+          EntitlementTransformer.toGraphQL,
+        ),
+        requestId,
+      })
+      verify(
+        mockAdminApiClient.applyExpendableEntitlementsToUser(anything()),
+      ).once()
     })
   })
 

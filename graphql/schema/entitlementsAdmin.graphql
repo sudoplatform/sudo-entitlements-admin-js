@@ -1,5 +1,4 @@
-## See @anonyome/cdk-constructs/lib/entitledService/schema.graphql for additional types
-## referenced here
+## See entitledService.graphql for additional types referenced here
 
 # Entitlement Type in an entitlement definition
 scalar EntitlementType
@@ -40,6 +39,7 @@ type EntitlementDefinition {
   name: String!
   description: String
   type: EntitlementType!
+  expendable: Boolean!
 }
 
 # Pagination connection for use when listing entitlement definitions
@@ -132,6 +132,9 @@ type ExternalUserEntitlements {
   # Effective entitlements for the user either obtained from the entitlements
   # set or as specified explicitly for this user.
   entitlements: [Entitlement!]!
+
+  # Expendable entitlements for the user.
+  expendableEntitlements: [Entitlement!]!
 
   # Milliseconds since epoch from when user's transitions should
   # be calculated. Defaults to current time.
@@ -238,6 +241,13 @@ input ApplyEntitlementsToUserInput {
 # Input for the applyEntitlementsToUsers mutation
 input ApplyEntitlementsToUsersInput {
   operations: [ApplyEntitlementsToUserInput!]!
+}
+
+# Input for the applyExpendableEntitlementsToUser mutation
+input ApplyExpendableEntitlementsToUserInput {
+  externalId: String!
+  expendableEntitlements: [EntitlementInput!]!
+  requestId: ID!
 }
 
 # Input for the getEntitlementsForUser query
@@ -405,6 +415,11 @@ type Mutation {
   applyEntitlementsToUsers(
     input: ApplyEntitlementsToUsersInput!
   ): [ExternalUserEntitlementsResult!]!
+
+  # Apply expendable entitlements to a user
+  applyExpendableEntitlementsToUser(
+    input: ApplyExpendableEntitlementsToUserInput!
+  ): ExternalUserEntitlements!
 
   # Remove an entitled user. Entitlements and consumption records related
   # to the specified user will be removed.

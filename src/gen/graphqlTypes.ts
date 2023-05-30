@@ -12,41 +12,53 @@ export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
   [SubKey in K]: Maybe<T[SubKey]>
 }
+export type MakeEmpty<
+  T extends { [key: string]: unknown },
+  K extends keyof T,
+> = { [_ in K]?: never }
+export type Incremental<T> =
+  | T
+  | {
+      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never
+    }
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: string
-  String: string
-  Boolean: boolean
-  Int: number
-  Float: number
-  AWSDate: any
-  AWSDateTime: any
-  AWSEmail: any
-  AWSIPAddress: any
-  AWSJSON: any
-  AWSPhone: any
-  AWSTime: any
-  AWSTimestamp: any
-  AWSURL: any
-  EntitlementType: 'numeric' | 'boolean'
+  ID: { input: string; output: string }
+  String: { input: string; output: string }
+  Boolean: { input: boolean; output: boolean }
+  Int: { input: number; output: number }
+  Float: { input: number; output: number }
+  AWSDate: { input: any; output: any }
+  AWSDateTime: { input: any; output: any }
+  AWSEmail: { input: any; output: any }
+  AWSIPAddress: { input: any; output: any }
+  AWSJSON: { input: any; output: any }
+  AWSPhone: { input: any; output: any }
+  AWSTime: { input: any; output: any }
+  AWSTimestamp: { input: any; output: any }
+  AWSURL: { input: any; output: any }
+  EntitlementType: {
+    input: 'numeric' | 'boolean'
+    output: 'numeric' | 'boolean'
+  }
 }
 
 export type AddEntitlementsSequenceInput = {
-  description?: InputMaybe<Scalars['String']>
-  name: Scalars['String']
+  description?: InputMaybe<Scalars['String']['input']>
+  name: Scalars['String']['input']
   transitions: Array<EntitlementsSequenceTransitionInput>
 }
 
 export type AddEntitlementsSetInput = {
-  description?: InputMaybe<Scalars['String']>
+  description?: InputMaybe<Scalars['String']['input']>
   entitlements: Array<EntitlementInput>
-  name: Scalars['String']
+  name: Scalars['String']['input']
 }
 
 export type ApplyEntitlementsSequenceToUserInput = {
-  entitlementsSequenceName: Scalars['String']
-  externalId: Scalars['String']
-  transitionsRelativeToEpochMs?: InputMaybe<Scalars['Float']>
+  entitlementsSequenceName: Scalars['String']['input']
+  externalId: Scalars['String']['input']
+  transitionsRelativeToEpochMs?: InputMaybe<Scalars['Float']['input']>
 }
 
 export type ApplyEntitlementsSequenceToUsersInput = {
@@ -54,8 +66,8 @@ export type ApplyEntitlementsSequenceToUsersInput = {
 }
 
 export type ApplyEntitlementsSetToUserInput = {
-  entitlementsSetName: Scalars['String']
-  externalId: Scalars['String']
+  entitlementsSetName: Scalars['String']['input']
+  externalId: Scalars['String']['input']
 }
 
 export type ApplyEntitlementsSetToUsersInput = {
@@ -64,59 +76,66 @@ export type ApplyEntitlementsSetToUsersInput = {
 
 export type ApplyEntitlementsToUserInput = {
   entitlements: Array<EntitlementInput>
-  externalId: Scalars['String']
+  externalId: Scalars['String']['input']
 }
 
 export type ApplyEntitlementsToUsersInput = {
   operations: Array<ApplyEntitlementsToUserInput>
 }
 
+export type ApplyExpendableEntitlementsToUserInput = {
+  expendableEntitlements: Array<EntitlementInput>
+  externalId: Scalars['String']['input']
+  requestId: Scalars['ID']['input']
+}
+
 export type EntitledUser = {
   __typename?: 'EntitledUser'
-  externalId: Scalars['String']
+  externalId: Scalars['String']['output']
 }
 
 export type Entitlement = {
   __typename?: 'Entitlement'
-  description?: Maybe<Scalars['String']>
-  name: Scalars['String']
-  value: Scalars['Int']
+  description?: Maybe<Scalars['String']['output']>
+  name: Scalars['String']['output']
+  value: Scalars['Int']['output']
 }
 
 export type EntitlementConsumer = {
   __typename?: 'EntitlementConsumer'
-  id: Scalars['ID']
-  issuer: Scalars['String']
+  id: Scalars['ID']['output']
+  issuer: Scalars['String']['output']
 }
 
 export type EntitlementConsumption = {
   __typename?: 'EntitlementConsumption'
-  available: Scalars['Int']
-  consumed: Scalars['Int']
+  available: Scalars['Int']['output']
+  consumed: Scalars['Int']['output']
   consumer?: Maybe<EntitlementConsumer>
-  firstConsumedAtEpochMs?: Maybe<Scalars['Float']>
-  lastConsumedAtEpochMs?: Maybe<Scalars['Float']>
-  name: Scalars['String']
-  value: Scalars['Int']
+  firstConsumedAtEpochMs?: Maybe<Scalars['Float']['output']>
+  lastConsumedAtEpochMs?: Maybe<Scalars['Float']['output']>
+  name: Scalars['String']['output']
+  value: Scalars['Int']['output']
 }
 
 export type EntitlementDefinition = {
   __typename?: 'EntitlementDefinition'
-  description?: Maybe<Scalars['String']>
-  name: Scalars['String']
-  type: Scalars['EntitlementType']
+  description?: Maybe<Scalars['String']['output']>
+  expendable: Scalars['Boolean']['output']
+  name: Scalars['String']['output']
+  type: Scalars['EntitlementType']['output']
 }
 
 export type EntitlementDefinitionConnection = {
   __typename?: 'EntitlementDefinitionConnection'
   items: Array<EntitlementDefinition>
-  nextToken?: Maybe<Scalars['String']>
+  nextToken?: Maybe<Scalars['String']['output']>
 }
 
 export type EntitlementInput = {
-  description?: InputMaybe<Scalars['String']>
-  name: Scalars['String']
-  value: Scalars['Int']
+  description?: InputMaybe<Scalars['String']['input']>
+  name: Scalars['String']['input']
+  value: Scalars['Int']['input']
 }
 
 export type EntitlementsConsumption = {
@@ -127,45 +146,45 @@ export type EntitlementsConsumption = {
 
 export type EntitlementsSequence = {
   __typename?: 'EntitlementsSequence'
-  createdAtEpochMs: Scalars['Float']
-  description?: Maybe<Scalars['String']>
-  name: Scalars['String']
+  createdAtEpochMs: Scalars['Float']['output']
+  description?: Maybe<Scalars['String']['output']>
+  name: Scalars['String']['output']
   transitions: Array<EntitlementsSequenceTransition>
-  updatedAtEpochMs: Scalars['Float']
-  version: Scalars['Int']
+  updatedAtEpochMs: Scalars['Float']['output']
+  version: Scalars['Int']['output']
 }
 
 export type EntitlementsSequenceTransition = {
   __typename?: 'EntitlementsSequenceTransition'
-  duration?: Maybe<Scalars['String']>
-  entitlementsSetName: Scalars['String']
+  duration?: Maybe<Scalars['String']['output']>
+  entitlementsSetName: Scalars['String']['output']
 }
 
 export type EntitlementsSequenceTransitionInput = {
-  duration?: InputMaybe<Scalars['String']>
-  entitlementsSetName: Scalars['String']
+  duration?: InputMaybe<Scalars['String']['input']>
+  entitlementsSetName: Scalars['String']['input']
 }
 
 export type EntitlementsSequencesConnection = {
   __typename?: 'EntitlementsSequencesConnection'
   items: Array<EntitlementsSequence>
-  nextToken?: Maybe<Scalars['String']>
+  nextToken?: Maybe<Scalars['String']['output']>
 }
 
 export type EntitlementsSet = {
   __typename?: 'EntitlementsSet'
-  createdAtEpochMs: Scalars['Float']
-  description?: Maybe<Scalars['String']>
+  createdAtEpochMs: Scalars['Float']['output']
+  description?: Maybe<Scalars['String']['output']>
   entitlements: Array<Entitlement>
-  name: Scalars['String']
-  updatedAtEpochMs: Scalars['Float']
-  version: Scalars['Int']
+  name: Scalars['String']['output']
+  updatedAtEpochMs: Scalars['Float']['output']
+  version: Scalars['Int']['output']
 }
 
 export type EntitlementsSetsConnection = {
   __typename?: 'EntitlementsSetsConnection'
   items: Array<EntitlementsSet>
-  nextToken?: Maybe<Scalars['String']>
+  nextToken?: Maybe<Scalars['String']['output']>
 }
 
 export type ExternalEntitlementsConsumption = {
@@ -176,20 +195,21 @@ export type ExternalEntitlementsConsumption = {
 
 export type ExternalUserEntitlements = {
   __typename?: 'ExternalUserEntitlements'
-  createdAtEpochMs: Scalars['Float']
+  createdAtEpochMs: Scalars['Float']['output']
   entitlements: Array<Entitlement>
-  entitlementsSequenceName?: Maybe<Scalars['String']>
-  entitlementsSetName?: Maybe<Scalars['String']>
-  externalId: Scalars['String']
-  owner?: Maybe<Scalars['String']>
-  transitionsRelativeToEpochMs?: Maybe<Scalars['Float']>
-  updatedAtEpochMs: Scalars['Float']
-  version: Scalars['Float']
+  entitlementsSequenceName?: Maybe<Scalars['String']['output']>
+  entitlementsSetName?: Maybe<Scalars['String']['output']>
+  expendableEntitlements: Array<Entitlement>
+  externalId: Scalars['String']['output']
+  owner?: Maybe<Scalars['String']['output']>
+  transitionsRelativeToEpochMs?: Maybe<Scalars['Float']['output']>
+  updatedAtEpochMs: Scalars['Float']['output']
+  version: Scalars['Float']['output']
 }
 
 export type ExternalUserEntitlementsError = {
   __typename?: 'ExternalUserEntitlementsError'
-  error: Scalars['String']
+  error: Scalars['String']['output']
 }
 
 export type ExternalUserEntitlementsResult =
@@ -197,23 +217,23 @@ export type ExternalUserEntitlementsResult =
   | ExternalUserEntitlementsError
 
 export type GetEntitlementDefinitionInput = {
-  name: Scalars['String']
+  name: Scalars['String']['input']
 }
 
 export type GetEntitlementsForUserInput = {
-  externalId: Scalars['String']
+  externalId: Scalars['String']['input']
 }
 
 export type GetEntitlementsSequenceInput = {
-  name: Scalars['String']
+  name: Scalars['String']['input']
 }
 
 export type GetEntitlementsSetInput = {
-  name: Scalars['String']
+  name: Scalars['String']['input']
 }
 
 export type InternalGetEntitlementsForUserInput = {
-  userId: Scalars['ID']
+  userId: Scalars['ID']['input']
 }
 
 export type Mutation = {
@@ -226,6 +246,7 @@ export type Mutation = {
   applyEntitlementsSetToUsers: Array<ExternalUserEntitlementsResult>
   applyEntitlementsToUser: ExternalUserEntitlements
   applyEntitlementsToUsers: Array<ExternalUserEntitlementsResult>
+  applyExpendableEntitlementsToUser: ExternalUserEntitlements
   removeEntitledUser?: Maybe<EntitledUser>
   removeEntitlementsSequence?: Maybe<EntitlementsSequence>
   removeEntitlementsSet?: Maybe<EntitlementsSet>
@@ -263,6 +284,10 @@ export type MutationApplyEntitlementsToUserArgs = {
 
 export type MutationApplyEntitlementsToUsersArgs = {
   input: ApplyEntitlementsToUsersInput
+}
+
+export type MutationApplyExpendableEntitlementsToUserArgs = {
+  input: ApplyExpendableEntitlementsToUserInput
 }
 
 export type MutationRemoveEntitledUserArgs = {
@@ -313,47 +338,47 @@ export type QueryGetEntitlementsSetArgs = {
 }
 
 export type QueryListEntitlementDefinitionsArgs = {
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryListEntitlementsSequencesArgs = {
-  nextToken?: InputMaybe<Scalars['String']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryListEntitlementsSetsArgs = {
-  nextToken?: InputMaybe<Scalars['String']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }
 
 export type RemoveEntitledUserInput = {
-  externalId: Scalars['String']
+  externalId: Scalars['String']['input']
 }
 
 export type RemoveEntitlementsSequenceInput = {
-  name: Scalars['String']
+  name: Scalars['String']['input']
 }
 
 export type RemoveEntitlementsSetInput = {
-  name: Scalars['String']
+  name: Scalars['String']['input']
 }
 
 export type SetEntitlementsSequenceInput = {
-  description?: InputMaybe<Scalars['String']>
-  name: Scalars['String']
+  description?: InputMaybe<Scalars['String']['input']>
+  name: Scalars['String']['input']
   transitions: Array<EntitlementsSequenceTransitionInput>
 }
 
 export type SetEntitlementsSetInput = {
-  description?: InputMaybe<Scalars['String']>
+  description?: InputMaybe<Scalars['String']['input']>
   entitlements: Array<EntitlementInput>
-  name: Scalars['String']
+  name: Scalars['String']['input']
 }
 
 export type UserEntitlements = {
   __typename?: 'UserEntitlements'
   entitlements: Array<Entitlement>
-  entitlementsSetName?: Maybe<Scalars['String']>
-  version: Scalars['Float']
+  entitlementsSetName?: Maybe<Scalars['String']['output']>
+  version: Scalars['Float']['output']
 }
 
 export type AddEntitlementsSequenceMutationVariables = Exact<{
@@ -421,6 +446,12 @@ export type ApplyEntitlementsSequenceToUserMutation = {
       description?: string | null
       value: number
     }>
+    expendableEntitlements: Array<{
+      __typename?: 'Entitlement'
+      name: string
+      description?: string | null
+      value: number
+    }>
   }
 }
 
@@ -442,6 +473,12 @@ export type ApplyEntitlementsSequenceToUsersMutation = {
         entitlementsSequenceName?: string | null
         transitionsRelativeToEpochMs?: number | null
         entitlements: Array<{
+          __typename?: 'Entitlement'
+          name: string
+          description?: string | null
+          value: number
+        }>
+        expendableEntitlements: Array<{
           __typename?: 'Entitlement'
           name: string
           description?: string | null
@@ -474,6 +511,12 @@ export type ApplyEntitlementsSetToUserMutation = {
       description?: string | null
       value: number
     }>
+    expendableEntitlements: Array<{
+      __typename?: 'Entitlement'
+      name: string
+      description?: string | null
+      value: number
+    }>
   }
 }
 
@@ -495,6 +538,12 @@ export type ApplyEntitlementsSetToUsersMutation = {
         entitlementsSequenceName?: string | null
         transitionsRelativeToEpochMs?: number | null
         entitlements: Array<{
+          __typename?: 'Entitlement'
+          name: string
+          description?: string | null
+          value: number
+        }>
+        expendableEntitlements: Array<{
           __typename?: 'Entitlement'
           name: string
           description?: string | null
@@ -527,6 +576,12 @@ export type ApplyEntitlementsToUserMutation = {
       description?: string | null
       value: number
     }>
+    expendableEntitlements: Array<{
+      __typename?: 'Entitlement'
+      name: string
+      description?: string | null
+      value: number
+    }>
   }
 }
 
@@ -553,9 +608,46 @@ export type ApplyEntitlementsToUsersMutation = {
           description?: string | null
           value: number
         }>
+        expendableEntitlements: Array<{
+          __typename?: 'Entitlement'
+          name: string
+          description?: string | null
+          value: number
+        }>
       }
     | { __typename: 'ExternalUserEntitlementsError'; error: string }
   >
+}
+
+export type ApplyExpendableEntitlementsToUserMutationVariables = Exact<{
+  input: ApplyExpendableEntitlementsToUserInput
+}>
+
+export type ApplyExpendableEntitlementsToUserMutation = {
+  __typename?: 'Mutation'
+  applyExpendableEntitlementsToUser: {
+    __typename?: 'ExternalUserEntitlements'
+    createdAtEpochMs: number
+    updatedAtEpochMs: number
+    version: number
+    externalId: string
+    owner?: string | null
+    entitlementsSetName?: string | null
+    entitlementsSequenceName?: string | null
+    transitionsRelativeToEpochMs?: number | null
+    entitlements: Array<{
+      __typename?: 'Entitlement'
+      name: string
+      description?: string | null
+      value: number
+    }>
+    expendableEntitlements: Array<{
+      __typename?: 'Entitlement'
+      name: string
+      description?: string | null
+      value: number
+    }>
+  }
 }
 
 export type EntitlementFragment = {
@@ -585,6 +677,7 @@ export type EntitlementDefinitionFragment = {
   name: string
   description?: string | null
   type: 'numeric' | 'boolean'
+  expendable: boolean
 }
 
 export type EntitlementsSequenceFragment = {
@@ -658,6 +751,12 @@ export type ExternalEntitlementsConsumptionFragment = {
       description?: string | null
       value: number
     }>
+    expendableEntitlements: Array<{
+      __typename?: 'Entitlement'
+      name: string
+      description?: string | null
+      value: number
+    }>
   }
   consumption: Array<{
     __typename?: 'EntitlementConsumption'
@@ -691,6 +790,12 @@ export type ExternalUserEntitlementsFragment = {
     description?: string | null
     value: number
   }>
+  expendableEntitlements: Array<{
+    __typename?: 'Entitlement'
+    name: string
+    description?: string | null
+    value: number
+  }>
 }
 
 export type ExternalUserEntitlementsErrorFragment = {
@@ -709,6 +814,7 @@ export type GetEntitlementDefinitionQuery = {
     name: string
     description?: string | null
     type: 'numeric' | 'boolean'
+    expendable: boolean
   } | null
 }
 
@@ -731,6 +837,12 @@ export type GetEntitlementsForUserQuery = {
       entitlementsSequenceName?: string | null
       transitionsRelativeToEpochMs?: number | null
       entitlements: Array<{
+        __typename?: 'Entitlement'
+        name: string
+        description?: string | null
+        value: number
+      }>
+      expendableEntitlements: Array<{
         __typename?: 'Entitlement'
         name: string
         description?: string | null
@@ -798,8 +910,8 @@ export type GetEntitlementsSetQuery = {
 }
 
 export type ListEntitlementDefinitionsQueryVariables = Exact<{
-  limit?: InputMaybe<Scalars['Int']>
-  nextToken?: InputMaybe<Scalars['String']>
+  limit?: InputMaybe<Scalars['Int']['input']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type ListEntitlementDefinitionsQuery = {
@@ -812,12 +924,13 @@ export type ListEntitlementDefinitionsQuery = {
       name: string
       description?: string | null
       type: 'numeric' | 'boolean'
+      expendable: boolean
     }>
   }
 }
 
 export type ListEntitlementsSequencesQueryVariables = Exact<{
-  nextToken?: InputMaybe<Scalars['String']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type ListEntitlementsSequencesQuery = {
@@ -842,7 +955,7 @@ export type ListEntitlementsSequencesQuery = {
 }
 
 export type ListEntitlementsSetsQueryVariables = Exact<{
-  nextToken?: InputMaybe<Scalars['String']>
+  nextToken?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type ListEntitlementsSetsQuery = {
@@ -981,6 +1094,7 @@ export const EntitlementDefinitionFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'name' } },
           { kind: 'Field', name: { kind: 'Name', value: 'description' } },
           { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'expendable' } },
         ],
       },
     },
@@ -1046,7 +1160,24 @@ export const EntitlementsSequenceFragmentDoc = {
         ],
       },
     },
-    ...EntitlementsSequenceTransitionFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'duration' } },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<EntitlementsSequenceFragment, unknown>
 export const EntitlementsSequencesConnectionFragmentDoc = {
@@ -1079,7 +1210,58 @@ export const EntitlementsSequencesConnectionFragmentDoc = {
         ],
       },
     },
-    ...EntitlementsSequenceFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'duration' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequence' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequence' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitions' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'EntitlementsSequenceTransition',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<EntitlementsSequencesConnectionFragment, unknown>
 export const EntitlementFragmentDoc = {
@@ -1137,7 +1319,22 @@ export const EntitlementsSetFragmentDoc = {
         ],
       },
     },
-    ...EntitlementFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<EntitlementsSetFragment, unknown>
 export const ExternalUserEntitlementsFragmentDoc = {
@@ -1181,12 +1378,40 @@ export const ExternalUserEntitlementsFragmentDoc = {
           },
           {
             kind: 'Field',
+            name: { kind: 'Name', value: 'expendableEntitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
             name: { kind: 'Name', value: 'transitionsRelativeToEpochMs' },
           },
         ],
       },
     },
-    ...EntitlementFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<ExternalUserEntitlementsFragment, unknown>
 export const EntitlementConsumptionFragmentDoc = {
@@ -1272,8 +1497,114 @@ export const ExternalEntitlementsConsumptionFragmentDoc = {
         ],
       },
     },
-    ...ExternalUserEntitlementsFragmentDoc.definitions,
-    ...EntitlementConsumptionFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'externalId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSequenceName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'expendableEntitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitionsRelativeToEpochMs' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementConsumption' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementConsumption' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'consumed' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'available' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'firstConsumedAtEpochMs' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'lastConsumedAtEpochMs' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'consumer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<ExternalEntitlementsConsumptionFragment, unknown>
 export const ExternalUserEntitlementsErrorFragmentDoc = {
@@ -1345,7 +1676,58 @@ export const AddEntitlementsSequenceDocument = {
         ],
       },
     },
-    ...EntitlementsSequenceFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'duration' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequence' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequence' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitions' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'EntitlementsSequenceTransition',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   AddEntitlementsSequenceMutation,
@@ -1403,7 +1785,53 @@ export const AddEntitlementsSetDocument = {
         ],
       },
     },
-    ...EntitlementsSetFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSet' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSet' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   AddEntitlementsSetMutation,
@@ -1464,7 +1892,78 @@ export const ApplyEntitlementsSequenceToUserDocument = {
         ],
       },
     },
-    ...ExternalUserEntitlementsFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'externalId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSequenceName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'expendableEntitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitionsRelativeToEpochMs' },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   ApplyEntitlementsSequenceToUserMutation,
@@ -1563,8 +2062,90 @@ export const ApplyEntitlementsSequenceToUsersDocument = {
         ],
       },
     },
-    ...ExternalUserEntitlementsFragmentDoc.definitions,
-    ...ExternalUserEntitlementsErrorFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'externalId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSequenceName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'expendableEntitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitionsRelativeToEpochMs' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlementsError' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlementsError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [{ kind: 'Field', name: { kind: 'Name', value: 'error' } }],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   ApplyEntitlementsSequenceToUsersMutation,
@@ -1622,7 +2203,78 @@ export const ApplyEntitlementsSetToUserDocument = {
         ],
       },
     },
-    ...ExternalUserEntitlementsFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'externalId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSequenceName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'expendableEntitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitionsRelativeToEpochMs' },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   ApplyEntitlementsSetToUserMutation,
@@ -1718,8 +2370,90 @@ export const ApplyEntitlementsSetToUsersDocument = {
         ],
       },
     },
-    ...ExternalUserEntitlementsFragmentDoc.definitions,
-    ...ExternalUserEntitlementsErrorFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'externalId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSequenceName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'expendableEntitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitionsRelativeToEpochMs' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlementsError' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlementsError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [{ kind: 'Field', name: { kind: 'Name', value: 'error' } }],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   ApplyEntitlementsSetToUsersMutation,
@@ -1777,7 +2511,78 @@ export const ApplyEntitlementsToUserDocument = {
         ],
       },
     },
-    ...ExternalUserEntitlementsFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'externalId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSequenceName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'expendableEntitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitionsRelativeToEpochMs' },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   ApplyEntitlementsToUserMutation,
@@ -1873,12 +2678,226 @@ export const ApplyEntitlementsToUsersDocument = {
         ],
       },
     },
-    ...ExternalUserEntitlementsFragmentDoc.definitions,
-    ...ExternalUserEntitlementsErrorFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'externalId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSequenceName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'expendableEntitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitionsRelativeToEpochMs' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlementsError' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlementsError' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [{ kind: 'Field', name: { kind: 'Name', value: 'error' } }],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   ApplyEntitlementsToUsersMutation,
   ApplyEntitlementsToUsersMutationVariables
+>
+export const ApplyExpendableEntitlementsToUserDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ApplyExpendableEntitlementsToUser' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {
+            kind: 'Variable',
+            name: { kind: 'Name', value: 'input' },
+          },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: {
+                kind: 'Name',
+                value: 'ApplyExpendableEntitlementsToUserInput',
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'applyExpendableEntitlementsToUser' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'input' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'externalId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSequenceName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'expendableEntitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitionsRelativeToEpochMs' },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  ApplyExpendableEntitlementsToUserMutation,
+  ApplyExpendableEntitlementsToUserMutationVariables
 >
 export const GetEntitlementDefinitionDocument = {
   kind: 'Document',
@@ -1932,7 +2951,23 @@ export const GetEntitlementDefinitionDocument = {
         ],
       },
     },
-    ...EntitlementDefinitionFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementDefinition' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementDefinition' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'expendable' } },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   GetEntitlementDefinitionQuery,
@@ -1993,7 +3028,153 @@ export const GetEntitlementsForUserDocument = {
         ],
       },
     },
-    ...ExternalEntitlementsConsumptionFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'externalId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSequenceName' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'expendableEntitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitionsRelativeToEpochMs' },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementConsumption' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementConsumption' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'consumed' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'available' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'firstConsumedAtEpochMs' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'lastConsumedAtEpochMs' },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'consumer' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'issuer' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ExternalEntitlementsConsumption' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'ExternalEntitlementsConsumption' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'ExternalUserEntitlements' },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'consumption' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EntitlementConsumption' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   GetEntitlementsForUserQuery,
@@ -2051,7 +3232,58 @@ export const GetEntitlementsSequenceDocument = {
         ],
       },
     },
-    ...EntitlementsSequenceFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'duration' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequence' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequence' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitions' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'EntitlementsSequenceTransition',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   GetEntitlementsSequenceQuery,
@@ -2109,7 +3341,53 @@ export const GetEntitlementsSetDocument = {
         ],
       },
     },
-    ...EntitlementsSetFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSet' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSet' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   GetEntitlementsSetQuery,
@@ -2187,7 +3465,23 @@ export const ListEntitlementDefinitionsDocument = {
         ],
       },
     },
-    ...EntitlementDefinitionFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementDefinition' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementDefinition' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'expendable' } },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   ListEntitlementDefinitionsQuery,
@@ -2242,7 +3536,85 @@ export const ListEntitlementsSequencesDocument = {
         ],
       },
     },
-    ...EntitlementsSequencesConnectionFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'duration' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequence' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequence' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitions' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'EntitlementsSequenceTransition',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequencesConnection' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequencesConnection' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'items' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'EntitlementsSequence' },
+                },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'nextToken' } },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   ListEntitlementsSequencesQuery,
@@ -2304,7 +3676,53 @@ export const ListEntitlementsSetsDocument = {
         ],
       },
     },
-    ...EntitlementsSetFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSet' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSet' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   ListEntitlementsSetsQuery,
@@ -2416,7 +3834,58 @@ export const RemoveEntitlementsSequenceDocument = {
         ],
       },
     },
-    ...EntitlementsSequenceFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'duration' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequence' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequence' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitions' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'EntitlementsSequenceTransition',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   RemoveEntitlementsSequenceMutation,
@@ -2474,7 +3943,53 @@ export const RemoveEntitlementsSetDocument = {
         ],
       },
     },
-    ...EntitlementsSetFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSet' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSet' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   RemoveEntitlementsSetMutation,
@@ -2532,7 +4047,58 @@ export const SetEntitlementsSequenceDocument = {
         ],
       },
     },
-    ...EntitlementsSequenceFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequenceTransition' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlementsSetName' },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'duration' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSequence' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSequence' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitions' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: {
+                    kind: 'Name',
+                    value: 'EntitlementsSequenceTransition',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   SetEntitlementsSequenceMutation,
@@ -2590,7 +4156,53 @@ export const SetEntitlementsSetDocument = {
         ],
       },
     },
-    ...EntitlementsSetFragmentDoc.definitions,
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Entitlement' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'Entitlement' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'EntitlementsSet' },
+      typeCondition: {
+        kind: 'NamedType',
+        name: { kind: 'Name', value: 'EntitlementsSet' },
+      },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAtEpochMs' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entitlements' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'FragmentSpread',
+                  name: { kind: 'Name', value: 'Entitlement' },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
   ],
 } as unknown as DocumentNode<
   SetEntitlementsSetMutation,

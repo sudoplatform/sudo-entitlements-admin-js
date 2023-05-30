@@ -39,6 +39,9 @@ import {
   ApplyEntitlementsToUsersDocument,
   ApplyEntitlementsToUsersInput,
   ApplyEntitlementsToUsersMutation,
+  ApplyExpendableEntitlementsToUserDocument,
+  ApplyExpendableEntitlementsToUserInput,
+  ApplyExpendableEntitlementsToUserMutation,
   EntitledUser,
   EntitlementDefinition,
   EntitlementDefinitionConnection,
@@ -743,6 +746,36 @@ export class AdminApiClient {
         } else {
           throw new FatalError(
             'applyEntitlementsToUsers did not return any result.',
+          )
+        }
+      }
+    } catch (err) {
+      thrownError = err as Error
+    }
+
+    this.mapAndThrowError(graphqlError, thrownError)
+  }
+
+  public async applyExpendableEntitlementsToUser(
+    input: ApplyExpendableEntitlementsToUserInput,
+  ): Promise<ExternalUserEntitlements> {
+    let graphqlError: AppSyncError | undefined
+    let thrownError: Error | undefined
+    try {
+      const result =
+        await this.client.mutate<ApplyExpendableEntitlementsToUserMutation>({
+          mutation: ApplyExpendableEntitlementsToUserDocument,
+          variables: { input },
+          fetchPolicy: mutationFetchPolicy,
+        })
+
+      graphqlError = result.errors?.[0]
+      if (!graphqlError) {
+        if (result.data) {
+          return result.data.applyExpendableEntitlementsToUser
+        } else {
+          throw new FatalError(
+            'applyExpendableEntitlementsToUser did not return any result.',
           )
         }
       }

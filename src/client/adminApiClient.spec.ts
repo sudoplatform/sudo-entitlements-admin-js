@@ -74,6 +74,8 @@ import {
   GetEntitlementDefinitionDocument,
   ListEntitlementDefinitionsQuery,
   ListEntitlementDefinitionsDocument,
+  ApplyExpendableEntitlementsToUserMutation,
+  ApplyExpendableEntitlementsToUserDocument,
 } from '../gen/graphqlTypes'
 import { AdminApiClient, AdminConsoleProject } from './adminApiClient'
 
@@ -115,7 +117,10 @@ describe('AdminApiClient test suite', () => {
     name: 'entitlement-definition',
     type: 'numeric',
     description: 'description for entitlement-definition',
+    expendable: false,
   }
+  const requestId = 'request-id'
+
   const userEntitlements: ExternalUserEntitlements & {
     __typename: 'ExternalUserEntitlements'
   } = {
@@ -125,6 +130,7 @@ describe('AdminApiClient test suite', () => {
     version: 1,
     externalId,
     entitlements: [{ name: 'entitlement-name', value: 1 }],
+    expendableEntitlements: [{ name: 'expendable-name', value: 1 }],
   }
   const entitlementsSet: EntitlementsSet = {
     createdAtEpochMs: now,
@@ -1014,6 +1020,133 @@ describe('AdminApiClient test suite', () => {
         adminApiClient.applyEntitlementsToUser({
           externalId,
           entitlements: userEntitlements.entitlements,
+        }),
+      ).rejects.toThrow(new UnknownGraphQLError(error))
+    })
+  })
+
+  describe('applyExpendableEntitlementsToUser tests', () => {
+    it('should return results', async () => {
+      when(
+        mockClient.mutate<ApplyExpendableEntitlementsToUserMutation>(
+          anything(),
+        ),
+      ).thenResolve({
+        data: { applyExpendableEntitlementsToUser: userEntitlements },
+      })
+
+      await expect(
+        adminApiClient.applyExpendableEntitlementsToUser({
+          externalId,
+          expendableEntitlements: userEntitlements.entitlements,
+          requestId,
+        }),
+      ).resolves.toEqual(userEntitlements)
+
+      const [actualMutation] = capture(mockClient.mutate as any).first()
+      expect(actualMutation).toEqual({
+        mutation: ApplyExpendableEntitlementsToUserDocument,
+        variables: {
+          input: {
+            externalId,
+            expendableEntitlements: userEntitlements.entitlements,
+            requestId,
+          },
+        },
+        fetchPolicy: 'no-cache',
+      })
+      verify(mockClient.mutate(anything())).once()
+    })
+
+    it('should throw a FatalError on no result', async () => {
+      when(
+        mockClient.mutate<ApplyExpendableEntitlementsToUserMutation>(
+          anything(),
+        ),
+      ).thenResolve({
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.applyExpendableEntitlementsToUser({
+          externalId,
+          expendableEntitlements: userEntitlements.entitlements,
+          requestId,
+        }),
+      ).rejects.toThrowErrorMatchingSnapshot()
+
+      const [actualMutation] = capture(mockClient.mutate as any).first()
+      expect(actualMutation).toEqual({
+        mutation: ApplyExpendableEntitlementsToUserDocument,
+        variables: {
+          input: {
+            externalId,
+            expendableEntitlements: userEntitlements.entitlements,
+            requestId,
+          },
+        },
+        fetchPolicy: 'no-cache',
+      })
+      verify(mockClient.mutate(anything())).once()
+    })
+
+    it('should throw a InvalidEntitlementsError when returned', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.InvalidEntitlementsError'
+
+      when(
+        mockClient.mutate<ApplyExpendableEntitlementsToUserMutation>(
+          anything(),
+        ),
+      ).thenResolve({
+        errors: [error],
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.applyExpendableEntitlementsToUser({
+          externalId,
+          expendableEntitlements: userEntitlements.entitlements,
+          requestId,
+        }),
+      ).rejects.toThrow(new InvalidEntitlementsError())
+    })
+
+    it('should throw a InvalidEntitlementsError when thrown', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.InvalidEntitlementsError'
+
+      when(
+        mockClient.mutate<ApplyExpendableEntitlementsToUserMutation>(
+          anything(),
+        ),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyExpendableEntitlementsToUser({
+          externalId,
+          expendableEntitlements: userEntitlements.entitlements,
+          requestId,
+        }),
+      ).rejects.toThrow(new InvalidEntitlementsError())
+    })
+
+    it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
+      const error = new Error('some error')
+
+      when(
+        mockClient.mutate<ApplyExpendableEntitlementsToUserMutation>(
+          anything(),
+        ),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyExpendableEntitlementsToUser({
+          externalId,
+          expendableEntitlements: userEntitlements.entitlements,
+          requestId,
         }),
       ).rejects.toThrow(new UnknownGraphQLError(error))
     })

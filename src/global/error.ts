@@ -114,3 +114,25 @@ export class EntitlementsSetImmutableError extends Error {
     this.name = 'EntitlementsSetImmutableError'
   }
 }
+
+/**
+ * Thrown if an operation invalidly specifies the same entitlement
+ * multiple times.
+ */
+export class DuplicateEntitlementError extends Error {
+  constructor() {
+    super('Entitlements may only be specified once in the operation')
+    this.name = 'DuplicateEntitlementError'
+  }
+}
+
+/**
+ * Returned if an applyExpendableEntitlementsToUser operation would
+ * result in negative expendable entitlements for the user
+ */
+export class NegativeEntitlementError extends Error {
+  constructor() {
+    super('Operation would result in negative entitlement')
+    this.name = 'NegativeEntitlementError'
+  }
+}

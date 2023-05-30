@@ -6,9 +6,13 @@ import waitForExpect from 'wait-for-expect'
 
 import {
   DefaultSudoEntitlementsAdminClient,
+  DuplicateEntitlementError,
   Entitlement,
   EntitlementsSequenceTransition,
+  ExternalEntitlementsConsumption,
   ExternalUserEntitlements,
+  InvalidEntitlementsError,
+  NegativeEntitlementError,
   SudoEntitlementsAdminClient,
 } from '../../src'
 
@@ -17,7 +21,9 @@ dotenv.config()
 require('isomorphic-fetch')
 
 const updatableEntitlement = process.env.ENT_UPDATABLE_ENTITLEMENT
+const expendableEntitlement = process.env.ENT_EXPENDABLE_ENTITLEMENT
 const describeUpdatable = updatableEntitlement ? describe : describe.skip
+const describeExpendable = expendableEntitlement ? describe : describe.skip
 
 describe('sudo-entitlements-admin API integration tests', () => {
   jest.setTimeout(90000)
@@ -749,6 +755,157 @@ describe('sudo-entitlements-admin API integration tests', () => {
       ).resolves.toEqual(addedSet)
 
       delete entitlementsSetsToRemove[addedSet.name]
+    })
+  })
+
+  describeExpendable('Expendable entitlement update tests', () => {
+    const expendableEntitlements: Entitlement[] = [
+      {
+        name: expendableEntitlement!,
+        value: 2,
+      },
+    ]
+
+    it('should throw InvalidEntitlementsError if entitlement does not exist', async () => {
+      const externalId = `apply-invalid-expendable:${run}`
+      await expect(
+        sudoEntitlementsAdmin.applyExpendableEntitlementsToUser(
+          externalId,
+          [{ name: v4(), value: 1 }],
+          v4(),
+        ),
+      ).rejects.toThrow(new InvalidEntitlementsError())
+    })
+
+    it('should throw DuplicateEntitlementError if entitlement is repeated', async () => {
+      const externalId = `apply-duplicate-expendable:${run}`
+      await expect(
+        sudoEntitlementsAdmin.applyExpendableEntitlementsToUser(
+          externalId,
+          [...expendableEntitlements, ...expendableEntitlements],
+          v4(),
+        ),
+      ).rejects.toThrow(new DuplicateEntitlementError())
+    })
+
+    it('should be able to operate on expendable entitlements', async () => {
+      expectBeforeAllComplete()
+
+      const externalId = `apply-expendable:${run}`
+
+      const initialRequestId = v4()
+
+      const explicit = await sudoEntitlementsAdmin.applyEntitlementsToUser(
+        externalId,
+        expendableEntitlements,
+      )
+      externalIds.push(externalId)
+
+      expect(explicit).toMatchObject<Partial<ExternalUserEntitlements>>({
+        version: 1,
+        externalId,
+        entitlements: expendableEntitlements,
+        expendableEntitlements: [],
+      })
+
+      const applied =
+        await sudoEntitlementsAdmin.applyExpendableEntitlementsToUser(
+          externalId,
+          expendableEntitlements,
+          initialRequestId,
+        )
+
+      expect(applied).toMatchObject<Partial<ExternalUserEntitlements>>({
+        version: 2,
+        externalId,
+        entitlements: expendableEntitlements,
+        expendableEntitlements,
+      })
+
+      await waitForExpect(async () => {
+        const retrieved = await sudoEntitlementsAdmin.getEntitlementsForUser(
+          externalId,
+        )
+        expect(retrieved).toMatchObject<ExternalEntitlementsConsumption>({
+          entitlements: {
+            externalId,
+            version: 2,
+            entitlements: expendableEntitlements,
+            expendableEntitlements,
+            createdAt: expect.any(Date),
+            updatedAt: expect.any(Date),
+          },
+          consumption: [],
+        })
+      })
+
+      // Replay should not affect entitlement
+      const replayed =
+        await sudoEntitlementsAdmin.applyExpendableEntitlementsToUser(
+          externalId,
+          expendableEntitlements,
+          initialRequestId,
+        )
+      expect(replayed).toEqual(applied)
+
+      // Expendable entitlement should increment
+      const incrementRequestId = v4()
+      const incremented =
+        await sudoEntitlementsAdmin.applyExpendableEntitlementsToUser(
+          externalId,
+          expendableEntitlements,
+          incrementRequestId,
+        )
+      expect(incremented).toEqual({
+        ...applied,
+        version: applied.version + 1,
+        updatedAt: expect.any(Date),
+        expendableEntitlements: [
+          {
+            name: expendableEntitlement!,
+            value: 4,
+          },
+        ],
+      })
+
+      // Expendable entitlement should decrement
+      const decrementRequestId = v4()
+      const decremented =
+        await sudoEntitlementsAdmin.applyExpendableEntitlementsToUser(
+          externalId,
+          [
+            {
+              name: expendableEntitlement!,
+              value: -4,
+            },
+          ],
+          decrementRequestId,
+        )
+      expect(decremented).toEqual({
+        ...incremented,
+        version: incremented.version + 1,
+        updatedAt: expect.any(Date),
+        expendableEntitlements: [
+          {
+            name: expendableEntitlement!,
+            value: 0,
+          },
+        ],
+      })
+
+      // Should throw an error if decrement would take it negative
+      await expect(
+        sudoEntitlementsAdmin.applyExpendableEntitlementsToUser(
+          externalId,
+          [
+            {
+              name: expendableEntitlement!,
+              value: -1,
+            },
+          ],
+          v4(),
+        ),
+      ).rejects.toThrow(new NegativeEntitlementError())
     })
   })
 })
