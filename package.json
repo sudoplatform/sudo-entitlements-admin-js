@@ -73,8 +73,8 @@
     "@graphql-codegen/typescript": "^4.0.0",
     "@graphql-codegen/typescript-operations": "^4.0.0",
     "@graphql-tools/utils": "^10.0.0",
-    "@sudoplatform/sudo-common": "^8.5.1",
-    "@sudoplatform/sudo-user": "^13.0.0",
+    "@sudoplatform/sudo-common": "^8.5.3",
+    "@sudoplatform/sudo-user": "^13.0.2",
     "@types/jest": "^27.5.2",
     "@types/node": "^16.18.34",
     "@types/uuid": "^9.0.1",
@@ -102,24 +102,12 @@
   },
   "outdatedSuppressions": {
     "major": {
-      "graphql": 1688018550,
-      "node-fetch": 1688018550,
-      "jest": 1688018550,
-      "ts-jest": 1688018551,
-      "@graphql-tools/utils": 1676098810,
-      "@types/jest": 1688018549,
-      "@types/node": 1688018549
+      "graphql": 1688697711,
+      "node-fetch": 1688697712,
+      "jest": 1688697712,
+      "ts-jest": 1688697712,
+      "@types/jest": 1688697711,
+      "@types/node": 1688697711
     }
-  },
-  "auditSuppressions": {
-    "1085251": 1674004114,
-    "1085261": 1674004100,
-    "1085291": 1674004086,
-    "1085292": 1674004059,
-    "1085321": 1674430025,
-    "1085322": 1674430016,
-    "1085403": 1674429576,
-    "1087848": 1674511932,
-    "1088370": 1674716378
   }
 }
