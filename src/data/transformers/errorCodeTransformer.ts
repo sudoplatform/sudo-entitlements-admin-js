@@ -12,6 +12,7 @@ import {
   EntitlementsSetNotFoundError,
   InvalidEntitlementsError,
   NegativeEntitlementError,
+  OverflowedEntitlementError,
 } from '../../global/error'
 
 export class ErrorCodeTransformer {
@@ -24,6 +25,9 @@ export class ErrorCodeTransformer {
         }
         case 'BulkOperationDuplicateUsersError': {
           return new BulkOperationDuplicateUsersError()
+        }
+        case 'DuplicateEntitlementError': {
+          return new DuplicateEntitlementError()
         }
         case 'EntitlementsSequenceAlreadyExistsError': {
           return new EntitlementsSequenceAlreadyExistsError()
@@ -52,8 +56,8 @@ export class ErrorCodeTransformer {
         case 'NegativeEntitlementError': {
           return new NegativeEntitlementError()
         }
-        case 'DuplicateEntitlementError': {
-          return new DuplicateEntitlementError()
+        case 'OverflowedEntitlementError': {
+          return new OverflowedEntitlementError()
         }
       }
     }

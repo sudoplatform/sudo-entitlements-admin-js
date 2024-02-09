@@ -22,6 +22,7 @@ import {
 import {
   AlreadyUpdatedError,
   BulkOperationDuplicateUsersError,
+  DuplicateEntitlementError,
   EntitlementsSequenceAlreadyExistsError,
   EntitlementsSequenceNotFoundError,
   EntitlementsSequenceUpdateInProgressError,
@@ -30,6 +31,8 @@ import {
   EntitlementsSetInUseError,
   EntitlementsSetNotFoundError,
   InvalidEntitlementsError,
+  NegativeEntitlementError,
+  OverflowedEntitlementError,
 } from '..'
 import {
   AddEntitlementsSetDocument,
@@ -1133,6 +1136,92 @@ describe('AdminApiClient test suite', () => {
       ).rejects.toThrow(new InvalidEntitlementsError())
     })
 
+    it('should throw a NegativeEntitlementError when returned', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.NegativeEntitlementError'
+
+      when(
+        mockClient.mutate<ApplyExpendableEntitlementsToUserMutation>(
+          anything(),
+        ),
+      ).thenResolve({
+        errors: [error],
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.applyExpendableEntitlementsToUser({
+          externalId,
+          expendableEntitlements: userEntitlements.entitlements,
+          requestId,
+        }),
+      ).rejects.toThrow(new NegativeEntitlementError())
+    })
+
+    it('should throw a NegativeEntitlementError when thrown', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.NegativeEntitlementError'
+
+      when(
+        mockClient.mutate<ApplyExpendableEntitlementsToUserMutation>(
+          anything(),
+        ),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyExpendableEntitlementsToUser({
+          externalId,
+          expendableEntitlements: userEntitlements.entitlements,
+          requestId,
+        }),
+      ).rejects.toThrow(new NegativeEntitlementError())
+    })
+
+    it('should throw a OverflowedEntitlementError when returned', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.OverflowedEntitlementError'
+
+      when(
+        mockClient.mutate<ApplyExpendableEntitlementsToUserMutation>(
+          anything(),
+        ),
+      ).thenResolve({
+        errors: [error],
+        data: null,
+      })
+
+      await expect(
+        adminApiClient.applyExpendableEntitlementsToUser({
+          externalId,
+          expendableEntitlements: userEntitlements.entitlements,
+          requestId,
+        }),
+      ).rejects.toThrow(new OverflowedEntitlementError())
+    })
+
+    it('should throw a OverflowedEntitlementError when thrown', async () => {
+      const error: GraphQLError = new GraphQLError('')
+      ;(error as AppSyncError).errorType =
+        'sudoplatform.entitlements.OverflowedEntitlementError'
+
+      when(
+        mockClient.mutate<ApplyExpendableEntitlementsToUserMutation>(
+          anything(),
+        ),
+      ).thenReject(error)
+
+      await expect(
+        adminApiClient.applyExpendableEntitlementsToUser({
+          externalId,
+          expendableEntitlements: userEntitlements.entitlements,
+          requestId,
+        }),
+      ).rejects.toThrow(new OverflowedEntitlementError())
+    })
+
     it('should throw a UnknownGraphQLError when non sudoplatform error thrown', async () => {
       const error = new Error('some error')
 
@@ -1690,6 +1779,8 @@ describe('AdminApiClient test suite', () => {
   describe('graphQLErrorToClientError', () => {
     it.each`
       errorType                                                                | expected
+      ${'sudoplatform.entitlements.OverflowedEntitlementError'}                | ${OverflowedEntitlementError}
+      ${'sudoplatform.entitlements.NegativeEntitlementError'}                  | ${NegativeEntitlementError}
       ${'sudoplatform.entitlements.InvalidEntitlementsError'}                  | ${InvalidEntitlementsError}
       ${'sudoplatform.entitlements.EntitlementsSetInUseError'}                 | ${EntitlementsSetInUseError}
       ${'sudoplatform.entitlements.EntitlementsSetNotFoundError'}              | ${EntitlementsSetNotFoundError}
@@ -1698,6 +1789,7 @@ describe('AdminApiClient test suite', () => {
       ${'sudoplatform.entitlements.EntitlementsSequenceNotFoundError'}         | ${EntitlementsSequenceNotFoundError}
       ${'sudoplatform.entitlements.EntitlementsSetImmutableError'}             | ${EntitlementsSetImmutableError}
       ${'sudoplatform.entitlements.EntitlementsSequenceUpdateInProgressError'} | ${EntitlementsSequenceUpdateInProgressError}
+      ${'sudoplatform.entitlements.DuplicateEntitlementError'}                 | ${DuplicateEntitlementError}
       ${'sudoplatform.entitlements.BulkOperationDuplicateUsersError'}          | ${BulkOperationDuplicateUsersError}
       ${'sudoplatform.entitlements.AlreadyUpdatedError'}                       | ${AlreadyUpdatedError}
       ${'sudoplatform.LimitExceededError'}                                     | ${LimitExceededError}

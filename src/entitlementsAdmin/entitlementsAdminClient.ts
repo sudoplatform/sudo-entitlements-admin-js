@@ -539,8 +539,7 @@ export interface SudoEntitlementsAdminClient {
    *
    * If a record for any user's entitlements does not yet exist it will be created.
    *
-   * @param externalId External IDP user ID of user to retrieve entitlements for
-   * @param entitlements The entitlements to apply to the user
+   * @param operations Array of applyEntitlementsToUser operations to perform.
    *
    * @returns The effective entitlements for the user
    *
@@ -582,8 +581,7 @@ export interface SudoEntitlementsAdminClient {
    *
    * If a record for a user's entitlements does not yet exist it will be created.
    *
-   * @param externalId External IDP user ID of user to retrieve entitlements for
-   * @param entitlementsSetName Name of the entitlements set to apply to the user
+   * @param operations Array of applyEntitlementsSetToUser operations to perform.
    *
    * @returns The effective entitlements for the user
    *
@@ -625,6 +623,9 @@ export interface SudoEntitlementsAdminClient {
    * @throws NegativeEntitlementError
    *    expendableEntitlements would cause an expendable entitlement for the user
    *    to go negative.
+   * @throws OverflowedEntitlementError
+   *    expendableEntitlements would cause an expendable entitlement for the user
+   *    to exceed the maximum allowable value.
    */
   applyExpendableEntitlementsToUser(
     externalId: string,
@@ -649,7 +650,7 @@ export interface SudoEntitlementsAdminClient {
    *
    * Call again with a token parameter to continue paginated listing
    *
-   * @param token Optional token from which to continue listing
+   * @param nextToken Optional token from which to continue listing
    *
    * @returns Paginated list of entitlements sequences
    */
@@ -731,8 +732,7 @@ export interface SudoEntitlementsAdminClient {
    *
    * If a record for any user's entitlements sequence does not yet exist it will be created.
    *
-   * @param externalId External IDP user ID of user to apply entitlements sequence to
-   * @param entitlementSequenceName Name of the entitlements sequence to apply to the user
+   * @param operations Array of applyEntitlementsSequenceToUser operations to perform.
    *
    * @returns The effective entitlements for the user
    *

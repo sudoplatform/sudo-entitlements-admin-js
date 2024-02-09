@@ -13,7 +13,7 @@ module.exports = {
       plugins: ['@typescript-eslint', 'import', 'prettier', 'tree-shaking'],
       parser: '@typescript-eslint/parser',
       parserOptions: {
-        project: './tsconfig.test.json',
+        project: './tsconfig.json',
       },
       extends: [
         'plugin:@typescript-eslint/recommended',

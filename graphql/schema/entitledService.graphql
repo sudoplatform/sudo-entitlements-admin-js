@@ -7,7 +7,7 @@ type Entitlement @aws_api_key @aws_iam @aws_cognito_user_pools {
   description: String
 
   # Value of the entitlement.
-  value: Int!
+  value: Float!
 }
 
 # Effective entitlements for a user
@@ -52,13 +52,13 @@ type EntitlementConsumption @aws_api_key @aws_iam @aws_cognito_user_pools {
   name: String!
 
   # Entitled amount
-  value: Int!
+  value: Float!
 
   # Consumed amount
-  consumed: Int!
+  consumed: Float!
 
   # Available amount
-  available: Int!
+  available: Float!
 
   # time this entitlement was first consumed
   firstConsumedAtEpochMs: Float

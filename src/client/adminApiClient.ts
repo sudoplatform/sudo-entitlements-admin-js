@@ -89,6 +89,7 @@ import {
 import {
   AlreadyUpdatedError,
   BulkOperationDuplicateUsersError,
+  DuplicateEntitlementError,
   EntitlementsSequenceAlreadyExistsError,
   EntitlementsSequenceNotFoundError,
   EntitlementsSequenceUpdateInProgressError,
@@ -98,6 +99,8 @@ import {
   EntitlementsSetNotFoundError,
   FatalError,
   InvalidEntitlementsError,
+  NegativeEntitlementError,
+  OverflowedEntitlementError,
 } from '../global/error'
 
 export interface AdminApiClientProps {
@@ -190,6 +193,9 @@ export class AdminApiClient {
         case 'BulkOperationDuplicateUsersError': {
           return new BulkOperationDuplicateUsersError()
         }
+        case 'DuplicateEntitlementError': {
+          return new DuplicateEntitlementError()
+        }
         case 'EntitlementsSequenceAlreadyExistsError': {
           return new EntitlementsSequenceAlreadyExistsError()
         }
@@ -213,6 +219,12 @@ export class AdminApiClient {
         }
         case 'InvalidEntitlementsError': {
           return new InvalidEntitlementsError()
+        }
+        case 'NegativeEntitlementError': {
+          return new NegativeEntitlementError()
+        }
+        case 'OverflowedEntitlementError': {
+          return new OverflowedEntitlementError()
         }
       }
     }

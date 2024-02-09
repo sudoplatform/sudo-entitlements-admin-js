@@ -136,3 +136,14 @@ export class NegativeEntitlementError extends Error {
     this.name = 'NegativeEntitlementError'
   }
 }
+
+/**
+ * Returned if an applyExpendableEntitlementsToUser operation would
+ * result in an overflowed expendable entitlements for the user
+ */
+export class OverflowedEntitlementError extends Error {
+  constructor() {
+    super('Operation would result in overflowed entitlement')
+    this.name = 'OverflowedEntitlementError'
+  }
+}

@@ -178,7 +178,7 @@ input EntitlementInput {
   description: String
 
   # Value of the entitlement.
-  value: Int!
+  value: Float!
 }
 
 # Input for the setEntitlementsSet mutation

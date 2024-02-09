@@ -13,6 +13,7 @@ import {
   ExternalUserEntitlements,
   InvalidEntitlementsError,
   NegativeEntitlementError,
+  OverflowedEntitlementError,
   SudoEntitlementsAdminClient,
 } from '../../src'
 
@@ -246,6 +247,12 @@ describe('sudo-entitlements-admin API integration tests', () => {
       value: 1,
     }
 
+    const largeEntitlement: Entitlement = {
+      name: updatableEntitlement!,
+      description: 'Test Entitlement',
+      value: 2 ^ 40,
+    }
+
     it('should be able to add and remove an entitlements set', async () => {
       expectBeforeAllComplete()
 
@@ -287,18 +294,69 @@ describe('sudo-entitlements-admin API integration tests', () => {
       })
 
       await waitForExpect(async () => {
-        const consumption = await sudoEntitlementsAdmin.getEntitlementsForUser(
-          externalId,
-        )
+        const consumption =
+          await sudoEntitlementsAdmin.getEntitlementsForUser(externalId)
         expect(consumption.consumption).toHaveLength(0)
         expect(consumption.entitlements).toEqual(applied)
       })
 
-      const entitledUser = await sudoEntitlementsAdmin.removeEntitledUser(
-        externalId,
-      )
+      const entitledUser =
+        await sudoEntitlementsAdmin.removeEntitledUser(externalId)
       expect(entitledUser?.externalId).toBe(externalId)
     })
+
+    it('should be able to apply large explicit entitlements to a user and retrieve entitlements consumption', async () => {
+      expectBeforeAllComplete()
+
+      const externalId = `apply-explicit:${run}`
+      const entitlements = [largeEntitlement]
+
+      const applied = await sudoEntitlementsAdmin.applyEntitlementsToUser(
+        externalId,
+        entitlements,
+      )
+
+      externalIds.push(externalId)
+
+      expect(applied).toMatchObject({
+        version: 1,
+        entitlements,
+        entitlementsSetName: undefined,
+      })
+
+      await waitForExpect(async () => {
+        const consumption =
+          await sudoEntitlementsAdmin.getEntitlementsForUser(externalId)
+        expect(consumption.consumption).toHaveLength(0)
+        expect(consumption.entitlements).toEqual(applied)
+      })
+
+      const entitledUser =
+        await sudoEntitlementsAdmin.removeEntitledUser(externalId)
+      expect(entitledUser?.externalId).toBe(externalId)
+    })
+
+    it.each`
+      name              | value
+      ${'non-integral'} | ${1.5}
+      ${'negative'}     | ${-1}
+      ${'too big'}      | ${2 ** 52}
+    `(
+      'should not be able to apply $name explicit entitlements to a user',
+      async ({ value }) => {
+        expectBeforeAllComplete()
+
+        const externalId = `apply-explicit:${run}`
+        const entitlements = [{ ...testEntitlement, value }]
+
+        await expect(
+          sudoEntitlementsAdmin.applyEntitlementsToUser(
+            externalId,
+            entitlements,
+          ),
+        ).rejects.toThrow(/DecodingError/)
+      },
+    )
 
     it('should be able to apply explicit entitlements to multiple users', async () => {
       expectBeforeAllComplete()
@@ -392,9 +450,8 @@ describe('sudo-entitlements-admin API integration tests', () => {
       })
 
       await waitForExpect(async () => {
-        const consumption = await sudoEntitlementsAdmin.getEntitlementsForUser(
-          externalId,
-        )
+        const consumption =
+          await sudoEntitlementsAdmin.getEntitlementsForUser(externalId)
         expect(consumption.consumption).toHaveLength(0)
         expect(consumption.entitlements).toEqual(applied)
       })
@@ -495,15 +552,13 @@ describe('sudo-entitlements-admin API integration tests', () => {
         entitlements: [testEntitlement],
       }
 
-      const addedSet1 = await sudoEntitlementsAdmin.addEntitlementsSet(
-        setInput1,
-      )
+      const addedSet1 =
+        await sudoEntitlementsAdmin.addEntitlementsSet(setInput1)
       entitlementsSetsToRemove[addedSet1.name] = null
       expect(addedSet1).toMatchObject({ ...setInput1, version: 1 })
 
-      const addedSet2 = await sudoEntitlementsAdmin.addEntitlementsSet(
-        setInput2,
-      )
+      const addedSet2 =
+        await sudoEntitlementsAdmin.addEntitlementsSet(setInput2)
       entitlementsSetsToRemove[addedSet2.name] = null
       expect(addedSet2).toMatchObject({ ...setInput2, version: 1 })
 
@@ -579,9 +634,8 @@ describe('sudo-entitlements-admin API integration tests', () => {
         description,
         entitlements: [testEntitlement],
       }
-      const addedSet = await sudoEntitlementsAdmin.addEntitlementsSet(
-        addSetInput,
-      )
+      const addedSet =
+        await sudoEntitlementsAdmin.addEntitlementsSet(addSetInput)
       entitlementsSetsToRemove[addedSet.name] = null
       expect(addedSet).toMatchObject({ ...addSetInput, version: 1 })
 
@@ -597,9 +651,8 @@ describe('sudo-entitlements-admin API integration tests', () => {
         transitions: [testEntitlementSequenceTrainsition],
       }
 
-      const addedSequence = await sudoEntitlementsAdmin.addEntitlementsSequence(
-        addedSequenceInput,
-      )
+      const addedSequence =
+        await sudoEntitlementsAdmin.addEntitlementsSequence(addedSequenceInput)
       entitlementsSequencesToRemove[addedSequence.name] = null
       expect(addedSequence).toMatchObject({ ...addedSequenceInput, version: 1 })
 
@@ -710,9 +763,8 @@ describe('sudo-entitlements-admin API integration tests', () => {
         description,
         entitlements: [testEntitlement],
       }
-      const addedSet = await sudoEntitlementsAdmin.addEntitlementsSet(
-        addSetInput,
-      )
+      const addedSet =
+        await sudoEntitlementsAdmin.addEntitlementsSet(addSetInput)
       entitlementsSetsToRemove[addedSet.name] = null
       expect(addedSet).toMatchObject({ ...addSetInput, version: 1 })
 
@@ -728,9 +780,8 @@ describe('sudo-entitlements-admin API integration tests', () => {
         transitions: [testEntitlementSequenceTrainsition],
       }
 
-      const addedSequence = await sudoEntitlementsAdmin.addEntitlementsSequence(
-        addedSequenceInput,
-      )
+      const addedSequence =
+        await sudoEntitlementsAdmin.addEntitlementsSequence(addedSequenceInput)
       entitlementsSequencesToRemove[addedSequence.name] = null
       expect(addedSequence).toMatchObject({ ...addedSequenceInput, version: 1 })
 
@@ -823,9 +874,8 @@ describe('sudo-entitlements-admin API integration tests', () => {
       })
 
       await waitForExpect(async () => {
-        const retrieved = await sudoEntitlementsAdmin.getEntitlementsForUser(
-          externalId,
-        )
+        const retrieved =
+          await sudoEntitlementsAdmin.getEntitlementsForUser(externalId)
         expect(retrieved).toMatchObject<ExternalEntitlementsConsumption>({
           entitlements: {
             externalId,
@@ -906,6 +956,42 @@ describe('sudo-entitlements-admin API integration tests', () => {
           v4(),
         ),
       ).rejects.toThrow(new NegativeEntitlementError())
+
+      await sudoEntitlementsAdmin.applyExpendableEntitlementsToUser(
+        externalId,
+        [
+          {
+            name: expendableEntitlement!,
+            value: 2 ** 52 - 1,
+          },
+        ],
+        v4(),
+      )
+
+      // Should throw an error if increment would overflow
+      await expect(
+        sudoEntitlementsAdmin.applyExpendableEntitlementsToUser(
+          externalId,
+          [
+            {
+              name: expendableEntitlement!,
+              value: 1,
+            },
+          ],
+          v4(),
+        ),
+      ).rejects.toThrow(new OverflowedEntitlementError())
+
+      await sudoEntitlementsAdmin.applyExpendableEntitlementsToUser(
+        externalId,
+        [
+          {
+            name: expendableEntitlement!,
+            value: -(2 ** 52 - 1),
+          },
+        ],
+        v4(),
+      )
     })
   })
 })
