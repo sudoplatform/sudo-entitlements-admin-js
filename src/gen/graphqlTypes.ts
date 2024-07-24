@@ -59,6 +59,7 @@ export type ApplyEntitlementsSequenceToUserInput = {
   entitlementsSequenceName: Scalars['String']['input']
   externalId: Scalars['String']['input']
   transitionsRelativeToEpochMs?: InputMaybe<Scalars['Float']['input']>
+  version?: InputMaybe<Scalars['Float']['input']>
 }
 
 export type ApplyEntitlementsSequenceToUsersInput = {
@@ -68,6 +69,7 @@ export type ApplyEntitlementsSequenceToUsersInput = {
 export type ApplyEntitlementsSetToUserInput = {
   entitlementsSetName: Scalars['String']['input']
   externalId: Scalars['String']['input']
+  version?: InputMaybe<Scalars['Float']['input']>
 }
 
 export type ApplyEntitlementsSetToUsersInput = {
@@ -77,6 +79,7 @@ export type ApplyEntitlementsSetToUsersInput = {
 export type ApplyEntitlementsToUserInput = {
   entitlements: Array<EntitlementInput>
   externalId: Scalars['String']['input']
+  version?: InputMaybe<Scalars['Float']['input']>
 }
 
 export type ApplyEntitlementsToUsersInput = {

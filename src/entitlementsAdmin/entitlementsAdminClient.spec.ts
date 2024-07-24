@@ -455,6 +455,32 @@ describe('SudoEntitlementsAdminClient test suite', () => {
       })
       verify(mockAdminApiClient.applyEntitlementsToUser(anything())).once()
     })
+
+    it('should pass required version property', async () => {
+      when(mockAdminApiClient.applyEntitlementsToUser(anything())).thenResolve(
+        ExternalUserEntitlementsTransformer.toGraphQL(userEntitlements),
+      )
+
+      await expect(
+        sudoEntitlementsAdminClient.applyEntitlementsToUser(
+          externalId,
+          entitlementsSet.entitlements,
+          1,
+        ),
+      ).resolves.toEqual(userEntitlements)
+
+      verify(mockAdminApiClient.applyEntitlementsToUser(anything())).once()
+      const [actualInput] = capture(
+        mockAdminApiClient.applyEntitlementsToUser,
+      ).first()
+      expect(actualInput).toEqual({
+        externalId,
+        entitlements: entitlementsSet.entitlements.map(
+          EntitlementTransformer.toGraphQL,
+        ),
+        version: 1,
+      })
+    })
   })
 
   describe('applyEntitlementsToUsers tests', () => {
@@ -483,6 +509,38 @@ describe('SudoEntitlementsAdminClient test suite', () => {
             entitlements: entitlementsSet.entitlements.map(
               EntitlementTransformer.toGraphQL,
             ),
+          },
+        ],
+      })
+    })
+
+    it('should pass required version property', async () => {
+      when(mockAdminApiClient.applyEntitlementsToUsers(anything())).thenResolve(
+        [ExternalUserEntitlementsTransformer.toGraphQL(userEntitlements)],
+      )
+
+      await expect(
+        sudoEntitlementsAdminClient.applyEntitlementsToUsers([
+          {
+            externalId,
+            entitlements: entitlementsSet.entitlements,
+            version: 1,
+          },
+        ]),
+      ).resolves.toEqual([userEntitlements])
+
+      verify(mockAdminApiClient.applyEntitlementsToUsers(anything())).once()
+      const [actualInput] = capture(
+        mockAdminApiClient.applyEntitlementsToUsers,
+      ).first()
+      expect(actualInput).toEqual({
+        operations: [
+          {
+            externalId,
+            entitlements: entitlementsSet.entitlements.map(
+              EntitlementTransformer.toGraphQL,
+            ),
+            version: 1,
           },
         ],
       })
@@ -777,6 +835,42 @@ describe('SudoEntitlementsAdminClient test suite', () => {
         ).once()
       },
     )
+
+    it('should pass required version parameter', async () => {
+      const sequencedUserEntitlements: ExternalUserEntitlements = {
+        ...userEntitlements,
+        transitionsRelativeTo: now,
+      }
+      when(
+        mockAdminApiClient.applyEntitlementsSequenceToUser(anything()),
+      ).thenResolve(
+        ExternalUserEntitlementsTransformer.toGraphQL(
+          sequencedUserEntitlements,
+        ),
+      )
+
+      await expect(
+        sudoEntitlementsAdminClient.applyEntitlementsSequenceToUser(
+          externalId,
+          entitlementsSequence.name,
+          now,
+          1,
+        ),
+      ).resolves.toEqual(sequencedUserEntitlements)
+
+      const [actualInput] = capture(
+        mockAdminApiClient.applyEntitlementsSequenceToUser,
+      ).first()
+      expect(actualInput).toEqual({
+        externalId,
+        entitlementsSequenceName: entitlementsSequence.name,
+        transitionsRelativeToEpochMs: now.getTime(),
+        version: 1,
+      })
+      verify(
+        mockAdminApiClient.applyEntitlementsSequenceToUser(anything()),
+      ).once()
+    })
   })
 
   describe('applyEntitlementsSequenceToUsers tests', () => {
@@ -830,6 +924,48 @@ describe('SudoEntitlementsAdminClient test suite', () => {
         })
       },
     )
+
+    it('should pass required version parameter', async () => {
+      const sequencedUserEntitlements: ExternalUserEntitlements = {
+        ...userEntitlements,
+        transitionsRelativeTo: now,
+      }
+      when(
+        mockAdminApiClient.applyEntitlementsSequenceToUsers(anything()),
+      ).thenResolve([
+        ExternalUserEntitlementsTransformer.toGraphQL(
+          sequencedUserEntitlements,
+        ),
+      ])
+
+      await expect(
+        sudoEntitlementsAdminClient.applyEntitlementsSequenceToUsers([
+          {
+            externalId,
+            entitlementsSequenceName: entitlementsSequence.name,
+            transitionsRelativeTo: now,
+            version: 1,
+          },
+        ]),
+      ).resolves.toEqual([sequencedUserEntitlements])
+
+      verify(
+        mockAdminApiClient.applyEntitlementsSequenceToUsers(anything()),
+      ).once()
+      const [actualInput] = capture(
+        mockAdminApiClient.applyEntitlementsSequenceToUsers,
+      ).first()
+      expect(actualInput).toEqual({
+        operations: [
+          {
+            externalId,
+            entitlementsSequenceName: entitlementsSequence.name,
+            transitionsRelativeToEpochMs: now.getTime(),
+            version: 1,
+          },
+        ],
+      })
+    })
   })
 
   describe('removeEntitledUser tests', () => {

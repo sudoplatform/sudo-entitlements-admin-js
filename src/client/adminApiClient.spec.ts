@@ -2,6 +2,7 @@
 import {
   AppSyncError,
   ConfigurationManager,
+  IllegalArgumentError,
   LimitExceededError,
   NoEntitlementsError,
   UnknownGraphQLError,
@@ -1793,6 +1794,7 @@ describe('AdminApiClient test suite', () => {
       ${'sudoplatform.entitlements.BulkOperationDuplicateUsersError'}          | ${BulkOperationDuplicateUsersError}
       ${'sudoplatform.entitlements.AlreadyUpdatedError'}                       | ${AlreadyUpdatedError}
       ${'sudoplatform.LimitExceededError'}                                     | ${LimitExceededError}
+      ${'sudoplatform.InvalidArgumentError'}                                   | ${IllegalArgumentError}
     `('should map $errorType correctly', ({ errorType, expected }) => {
       expect(
         adminApiClient.graphQLErrorToClientError({

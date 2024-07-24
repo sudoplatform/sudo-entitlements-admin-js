@@ -209,6 +209,13 @@ input RemoveEntitlementsSetInput {
 input ApplyEntitlementsSetToUserInput {
   externalId: String!
   entitlementsSetName: String!
+
+  # Expected version of user entitlements for this change to be
+  # applied. Only the integer portion of this is treated as
+  # significant. Typed as Float to allow simply reflection
+  # of the version value for users entitled by entitlements
+  # sequence or set
+  version: Float
 }
 
 # Input for the applyEntitlementsSetToUsers mutation
@@ -225,6 +232,13 @@ input ApplyEntitlementsSequenceToUserInput {
   # be calculated. Defaults to current time.
   # Is a Float only for precision. Must be an integral value.
   transitionsRelativeToEpochMs: Float
+
+  # Expected version of user entitlements for this change to be
+  # applied. Only the integer portion of this is treated as
+  # significant. Typed as Float to allow simply reflection
+  # of the version value for users entitled by entitlements
+  # sequence or set
+  version: Float
 }
 
 # Input for the applyEntitlementsSequenceToUsers mutation
@@ -236,6 +250,13 @@ input ApplyEntitlementsSequenceToUsersInput {
 input ApplyEntitlementsToUserInput {
   externalId: String!
   entitlements: [EntitlementInput!]!
+
+  # Expected version of user entitlements for this change to be
+  # applied. Only the integer portion of this is treated as
+  # significant. Typed as Float to allow simply reflection
+  # of the version value for users entitled by entitlements
+  # sequence or set
+  version: Float
 }
 
 # Input for the applyEntitlementsToUsers mutation

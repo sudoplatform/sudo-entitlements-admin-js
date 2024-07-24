@@ -1,10 +1,14 @@
-import { DefaultConfigurationManager } from '@sudoplatform/sudo-common'
+import {
+  DefaultConfigurationManager,
+  IllegalArgumentError,
+} from '@sudoplatform/sudo-common'
 import * as dotenv from 'dotenv'
 import fs from 'fs'
 import { v4 } from 'uuid'
 import waitForExpect from 'wait-for-expect'
 
 import {
+  AlreadyUpdatedError,
   DefaultSudoEntitlementsAdminClient,
   DuplicateEntitlementError,
   Entitlement,
@@ -305,10 +309,63 @@ describe('sudo-entitlements-admin API integration tests', () => {
       expect(entitledUser?.externalId).toBe(externalId)
     })
 
-    it('should be able to apply large explicit entitlements to a user and retrieve entitlements consumption', async () => {
+    it('should be able to apply explicit entitlements to a user specifying version', async () => {
       expectBeforeAllComplete()
 
       const externalId = `apply-explicit:${run}`
+      const entitlements = [testEntitlement]
+
+      const applied = await sudoEntitlementsAdmin.applyEntitlementsToUser(
+        externalId,
+        entitlements,
+        0,
+      )
+
+      externalIds.push(externalId)
+
+      expect(applied).toMatchObject({
+        version: 1,
+        entitlements,
+        entitlementsSetName: undefined,
+      })
+
+      await expect(
+        sudoEntitlementsAdmin.applyEntitlementsToUser(
+          externalId,
+          entitlements,
+          applied.version - 1,
+        ),
+      ).rejects.toThrow(AlreadyUpdatedError)
+
+      await expect(
+        sudoEntitlementsAdmin.applyEntitlementsToUser(
+          externalId,
+          entitlements,
+          applied.version + 1,
+        ),
+      ).rejects.toThrow(IllegalArgumentError)
+
+      await expect(
+        sudoEntitlementsAdmin.applyEntitlementsToUser(
+          externalId,
+          entitlements,
+          applied.version,
+        ),
+      ).resolves.toEqual({
+        ...applied,
+        version: applied.version + 1,
+        updatedAt: expect.any(Date),
+      })
+
+      const entitledUser =
+        await sudoEntitlementsAdmin.removeEntitledUser(externalId)
+      expect(entitledUser?.externalId).toBe(externalId)
+    })
+
+    it('should be able to apply large explicit entitlements to a user and retrieve entitlements consumption', async () => {
+      expectBeforeAllComplete()
+
+      const externalId = `apply-explicit-large:${run}`
       const entitlements = [largeEntitlement]
 
       const applied = await sudoEntitlementsAdmin.applyEntitlementsToUser(
@@ -454,6 +511,65 @@ describe('sudo-entitlements-admin API integration tests', () => {
           await sudoEntitlementsAdmin.getEntitlementsForUser(externalId)
         expect(consumption.consumption).toHaveLength(0)
         expect(consumption.entitlements).toEqual(applied)
+      })
+    })
+
+    it('should be able to apply entitlements set to a user specifying version', async () => {
+      expectBeforeAllComplete()
+
+      const externalId = `apply-set-version:${run}`
+
+      const description = 'apply-set-version'
+      const name = `${description}:${run}`
+      const input = {
+        name,
+        description,
+        entitlements: [testEntitlement],
+      }
+      const added = await sudoEntitlementsAdmin.addEntitlementsSet(input)
+      entitlementsSetsToRemove[added.name] = null
+      expect(added).toMatchObject({ ...input, version: 1 })
+
+      const applied = await sudoEntitlementsAdmin.applyEntitlementsSetToUser(
+        externalId,
+        name,
+        0,
+      )
+
+      externalIds.push(externalId)
+
+      expect(applied).toMatchObject({
+        version: 1 + added.version / 100000,
+        entitlements: input.entitlements,
+        entitlementsSetName: name,
+      })
+
+      await expect(
+        sudoEntitlementsAdmin.applyEntitlementsSetToUser(
+          externalId,
+          name,
+          applied.version - 1,
+        ),
+      ).rejects.toThrow(AlreadyUpdatedError)
+
+      await expect(
+        sudoEntitlementsAdmin.applyEntitlementsSetToUser(
+          externalId,
+          name,
+          applied.version + 1,
+        ),
+      ).rejects.toThrow(IllegalArgumentError)
+
+      await expect(
+        sudoEntitlementsAdmin.applyEntitlementsSetToUser(
+          externalId,
+          name,
+          applied.version,
+        ),
+      ).resolves.toEqual({
+        ...applied,
+        version: applied.version + 1,
+        updatedAt: expect.any(Date),
       })
     })
 
@@ -752,6 +868,90 @@ describe('sudo-entitlements-admin API integration tests', () => {
         })
       },
     )
+
+    it('should be able to apply entitlements sequence specifying version', async () => {
+      expectBeforeAllComplete()
+
+      const testId = v4()
+      const externalId = `apply-sequence-with-version:${testId}`
+
+      const description = 'apply-sequence-with-version'
+      const name = `${description}:${testId}`
+      const input = {
+        name,
+        description,
+        entitlements: [testEntitlement],
+      }
+      const added = await sudoEntitlementsAdmin.addEntitlementsSet(input)
+      entitlementsSetsToRemove[added.name] = null
+      expect(added).toMatchObject({ ...input, version: 1 })
+
+      const testEntitlementSequenceTransition: EntitlementsSequenceTransition =
+        {
+          entitlementsSetName: name,
+          duration: 'PT1H',
+        }
+
+      const addedSequenceInput = {
+        name,
+        description,
+        transitions: [testEntitlementSequenceTransition],
+      }
+
+      const addedSequence =
+        await sudoEntitlementsAdmin.addEntitlementsSequence(addedSequenceInput)
+      entitlementsSequencesToRemove[addedSequence.name] = null
+      expect(addedSequence).toMatchObject({
+        ...addedSequenceInput,
+        version: 1,
+      })
+
+      const applied =
+        await sudoEntitlementsAdmin.applyEntitlementsSequenceToUser(
+          externalId,
+          name,
+          undefined,
+          0,
+        )
+
+      expect(applied).toMatchObject({
+        version: 1 + added.version / 100000,
+        entitlements: input.entitlements,
+        entitlementsSetName: name,
+      })
+      expect(applied.transitionsRelativeTo).toBeUndefined()
+
+      await expect(
+        sudoEntitlementsAdmin.applyEntitlementsSequenceToUser(
+          externalId,
+          name,
+          undefined,
+          applied.version - 1,
+        ),
+      ).rejects.toThrow(AlreadyUpdatedError)
+
+      await expect(
+        sudoEntitlementsAdmin.applyEntitlementsSequenceToUser(
+          externalId,
+          name,
+          undefined,
+          applied.version + 1,
+        ),
+      ).rejects.toThrow(IllegalArgumentError)
+
+      await expect(
+        sudoEntitlementsAdmin.applyEntitlementsSequenceToUser(
+          externalId,
+          name,
+          undefined,
+          applied.version,
+        ),
+      ).resolves.toEqual({
+        ...applied,
+        version: applied.version + 1,
+        updatedAt: expect.any(Date),
+      })
+    })
 
     it('should be able to add and update an entitlements sequence', async () => {
       expectBeforeAllComplete()

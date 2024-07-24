@@ -521,15 +521,21 @@ export interface SudoEntitlementsAdminClient {
    *
    * @param externalId External IDP user ID of user to retrieve entitlements for
    * @param entitlements The entitlements to apply to the user
+   * @param version If specified, version of any current entitlements that must be matched
    *
    * @returns The effective entitlements for the user
    *
    * @throws {@link InvalidEntitlementsError}
    *  - Entitlements contains one or more entitlements with unrecognized names
+   * @throws {@link AlreadyUpdatedError}
+   *  - Specified version is less than the current entitlements version
+   * @throws IllegalArgumentError
+   *  - Specified version is greater than the current entitlements version
    */
   applyEntitlementsToUser(
     externalId: string,
     entitlements: Entitlement[],
+    version?: number,
   ): Promise<ExternalUserEntitlements>
 
   /**
@@ -550,6 +556,7 @@ export interface SudoEntitlementsAdminClient {
     operations: {
       externalId: string
       entitlements: Entitlement[]
+      version?: number
     }[],
   ): Promise<ExternalUserEntitlementsResult[]>
 
@@ -560,18 +567,23 @@ export interface SudoEntitlementsAdminClient {
    *
    * @param externalId External IDP user ID of user to retrieve entitlements for
    * @param entitlementsSetName Name of the entitlements set to apply to the user
+   * @param version If specified, version of any current entitlements that must be matched
    *
    * @returns The effective entitlements for the user
    *
    * @throws EntitlementSetNotFoundError
    *  - If the named entitlements set does not exist
-   *
    * @throws {@link AlreadyUpdatedError}
    *  - if the user's entitlements have been updated with a later version
+   * @throws {@link AlreadyUpdatedError}
+   *  - Specified version is less than the current entitlements version
+   * @throws IllegalArgumentError
+   *  - Specified version is greater than the current entitlements version
    */
   applyEntitlementsSetToUser(
     externalId: string,
     entitlementsSetName: string,
+    version?: number,
   ): Promise<ExternalUserEntitlements>
 
   /**
@@ -595,6 +607,7 @@ export interface SudoEntitlementsAdminClient {
     operations: {
       externalId: string
       entitlementsSetName: string
+      version?: number
     }[],
   ): Promise<ExternalUserEntitlementsResult[]>
 
@@ -710,6 +723,7 @@ export interface SudoEntitlementsAdminClient {
    *
    * @param externalId External IDP user ID of user to apply entitlements sequence to
    * @param entitlementsSequenceName Name of the entitlements sequence to apply to the user
+   * @param version If specified, version of any current entitlements that must be matched
    *
    * @returns The effective entitlements for the user
    *
@@ -718,11 +732,16 @@ export interface SudoEntitlementsAdminClient {
    *
    * @throws {@link EntitlementsSequenceNotFoundError}
    * - If the entitlements sequence named is not defined
+   * @throws {@link AlreadyUpdatedError}
+   *  - Specified version is less than the current entitlements version
+   * @throws IllegalArgumentError
+   *  - Specified version is greater than the current entitlements version
    */
   applyEntitlementsSequenceToUser(
     externalId: string,
     entitlementsSequenceName: string,
     transitionsRelativeTo?: Date,
+    version?: number,
   ): Promise<ExternalUserEntitlements>
 
   /**
@@ -747,6 +766,7 @@ export interface SudoEntitlementsAdminClient {
       externalId: string
       entitlementsSequenceName: string
       transitionsRelativeTo?: Date
+      version?: number
     }[],
   ): Promise<ExternalUserEntitlementsResult[]>
 
@@ -876,11 +896,13 @@ export class DefaultSudoEntitlementsAdminClient
   async applyEntitlementsSetToUser(
     externalId: string,
     entitlementsSetName: string,
+    version?: number,
   ): Promise<ExternalUserEntitlements> {
     const userEntitlements =
       await this.adminApiClient.applyEntitlementsSetToUser({
         externalId,
         entitlementsSetName,
+        version,
       })
     return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
   }
@@ -889,6 +911,7 @@ export class DefaultSudoEntitlementsAdminClient
     operations: {
       externalId: string
       entitlementsSetName: string
+      version?: number
     }[],
   ): Promise<ExternalUserEntitlementsResult[]> {
     const results = await this.adminApiClient.applyEntitlementsSetToUsers({
@@ -900,10 +923,12 @@ export class DefaultSudoEntitlementsAdminClient
   async applyEntitlementsToUser(
     externalId: string,
     entitlements: Entitlement[],
+    version?: number,
   ): Promise<ExternalUserEntitlements> {
     const userEntitlements = await this.adminApiClient.applyEntitlementsToUser({
       externalId,
       entitlements: entitlements.map(EntitlementTransformer.toGraphQL),
+      version,
     })
     return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
   }
@@ -912,12 +937,14 @@ export class DefaultSudoEntitlementsAdminClient
     operations: {
       externalId: string
       entitlements: Entitlement[]
+      version?: number
     }[],
   ): Promise<ExternalUserEntitlementsResult[]> {
     const results = await this.adminApiClient.applyEntitlementsToUsers({
       operations: operations.map((o) => ({
         externalId: o.externalId,
         entitlements: o.entitlements.map(EntitlementTransformer.toGraphQL),
+        version: o.version,
       })),
     })
     return results.map(ExternalUserEntitlementsResultTransformer.toClient)
@@ -998,12 +1025,14 @@ export class DefaultSudoEntitlementsAdminClient
     externalId: string,
     entitlementsSequenceName: string,
     transitionsRelativeTo?: Date,
+    version?: number,
   ): Promise<ExternalUserEntitlements> {
     const userEntitlements =
       await this.adminApiClient.applyEntitlementsSequenceToUser({
         externalId,
         entitlementsSequenceName,
         transitionsRelativeToEpochMs: transitionsRelativeTo?.getTime(),
+        version,
       })
     return ExternalUserEntitlementsTransformer.toClient(userEntitlements)
   }
@@ -1013,6 +1042,7 @@ export class DefaultSudoEntitlementsAdminClient
       externalId: string
       entitlementsSequenceName: string
       transitionsRelativeTo?: Date
+      version?: number
     }[],
   ): Promise<ExternalUserEntitlementsResult[]> {
     const results = await this.adminApiClient.applyEntitlementsSequenceToUsers({
@@ -1020,6 +1050,7 @@ export class DefaultSudoEntitlementsAdminClient
         externalId: o.externalId,
         entitlementsSequenceName: o.entitlementsSequenceName,
         transitionsRelativeToEpochMs: o.transitionsRelativeTo?.getTime(),
+        version: o.version,
       })),
     })
     return results.map(ExternalUserEntitlementsResultTransformer.toClient)
