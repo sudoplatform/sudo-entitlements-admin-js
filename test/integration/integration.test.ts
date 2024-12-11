@@ -23,6 +23,7 @@ import {
 
 dotenv.config()
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 require('isomorphic-fetch')
 
 const updatableEntitlement = process.env.ENT_UPDATABLE_ENTITLEMENT
