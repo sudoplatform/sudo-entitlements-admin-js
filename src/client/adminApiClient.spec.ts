@@ -1808,6 +1808,9 @@ describe('AdminApiClient test suite', () => {
           source: undefined,
           positions: undefined,
           originalError: undefined,
+          toJSON: () => {
+            throw new Error('not implemented')
+          },
         }),
       ).toEqual(new expected())
     })
