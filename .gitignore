@@ -12,3 +12,5 @@ coverage
 .env
 package.json.old
 .DS_Store
+
+.yarn/install-state.gz

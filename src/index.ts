@@ -2,3 +2,4 @@
 
 export * from './entitlementsAdmin/entitlementsAdminClient'
 export * from './global/error'
+export { AWSCredential, Credential } from './client/adminApiClient'

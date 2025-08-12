@@ -103,6 +103,19 @@ import {
   OverflowedEntitlementError,
 } from '../global/error'
 
+export interface AWSCredential {
+  accessKeyId: string
+  secretAccessKey: string
+  sessionToken: string
+}
+
+export type Credential =
+  | { type: 'API_KEY'; key: string }
+  | {
+      type: 'IAM'
+      credential?: AWSCredential
+    }
+
 export interface AdminApiClientProps {
   apiKey: string
   region: string
@@ -124,33 +137,38 @@ export type AdminConsoleProject = t.TypeOf<typeof AdminConsoleProject>
 
 /**
  * For auth, we allow IAM auth primarily to enable our own
- * system tests. It's unlikely that this would be of use
- * externally so we enable IAM auth by making 'IAM' a special
- * API key value.
+ * system tests.
  */
-function getAuthOptions(apiKey: string): AuthOptions {
-  if (apiKey === 'IAM') {
-    const accessKeyId = process.env.AWS_ACCESS_KEY_ID
-    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
-    const sessionToken = process.env.AWS_SESSION_TOKEN
-
-    if (accessKeyId && secretAccessKey) {
+function getAuthOptions(credential: Credential): AuthOptions {
+  if (credential.type === 'IAM') {
+    if (credential.credential) {
       return {
         type: AUTH_TYPE.AWS_IAM,
-        credentials: {
-          accessKeyId,
-          secretAccessKey,
-          sessionToken,
-        },
+        credentials: credential.credential,
       }
     } else {
-      return {
-        type: AUTH_TYPE.AWS_IAM,
-        credentials: null,
+      const accessKeyId = process.env.AWS_ACCESS_KEY_ID
+      const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
+      const sessionToken = process.env.AWS_SESSION_TOKEN
+
+      if (accessKeyId && secretAccessKey) {
+        return {
+          type: AUTH_TYPE.AWS_IAM,
+          credentials: {
+            accessKeyId,
+            secretAccessKey,
+            sessionToken,
+          },
+        }
+      } else {
+        return {
+          type: AUTH_TYPE.AWS_IAM,
+          credentials: null,
+        }
       }
     }
   } else {
-    return { type: AUTH_TYPE.API_KEY, apiKey }
+    return { type: AUTH_TYPE.API_KEY, apiKey: credential.key }
   }
 }
 
@@ -162,7 +180,7 @@ export class AdminApiClient {
   private readonly client: AWSAppSyncClient<NormalizedCacheObject>
 
   public constructor(
-    apiKey: string,
+    apiKeyOrCred: string | Credential,
     configurationManager?: ConfigurationManager,
     client?: AWSAppSyncClient<NormalizedCacheObject>,
   ) {
@@ -172,13 +190,19 @@ export class AdminApiClient {
       AdminConsoleProject,
       'adminConsoleProjectService',
     )
+    const credential: Credential =
+      typeof apiKeyOrCred === 'string'
+        ? apiKeyOrCred === 'IAM'
+          ? { type: 'IAM' }
+          : { type: 'API_KEY', key: apiKeyOrCred }
+        : apiKeyOrCred
 
     this.client =
       client ??
       new AWSAppSyncClient<NormalizedCacheObject>({
         url: config.apiUrl,
         region: config.region,
-        auth: getAuthOptions(apiKey),
+        auth: getAuthOptions(credential),
         disableOffline: true,
       })
   }

@@ -19,6 +19,8 @@ import {
   NegativeEntitlementError,
   OverflowedEntitlementError,
   SudoEntitlementsAdminClient,
+  Credential,
+  AWSCredential,
 } from '../../src'
 
 dotenv.config()
@@ -51,10 +53,13 @@ describe('sudo-entitlements-admin API integration tests', () => {
       fs.readFileSync(sudoPlatformConfig).toString(),
     )
 
+    beforeAllComplete = true
+  })
+
+  beforeEach(() => {
     sudoEntitlementsAdmin = new DefaultSudoEntitlementsAdminClient(
       process.env.ADMIN_API_KEY || 'IAM',
     )
-    beforeAllComplete = true
   })
 
   afterAll(async () => {
@@ -212,6 +217,33 @@ describe('sudo-entitlements-admin API integration tests', () => {
           }
         }
       }
+    })
+
+    it('should successfully read entitlement definitions with explicit IAM cred', async () => {
+      expectBeforeAllComplete()
+
+      let credential: Credential
+      if (process.env.ADMIN_API_KEY) {
+        credential = { type: 'API_KEY', key: process.env.ADMIN_API_KEY }
+      } else {
+        let awsCredential: AWSCredential | undefined = undefined
+        const accessKeyId = process.env.AWS_ACCESS_KEY_ID
+        const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
+        const sessionToken = process.env.AWS_SESSION_TOKEN
+        if (accessKeyId && secretAccessKey && sessionToken) {
+          awsCredential = {
+            accessKeyId,
+            secretAccessKey,
+            sessionToken,
+          }
+        }
+        credential = { type: 'IAM', credential: awsCredential }
+      }
+      sudoEntitlementsAdmin = new DefaultSudoEntitlementsAdminClient(credential)
+
+      await expect(
+        sudoEntitlementsAdmin.listEntitlementDefinitions(),
+      ).resolves.toBeTruthy()
     })
   })
 

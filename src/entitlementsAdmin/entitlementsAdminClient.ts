@@ -1,4 +1,4 @@
-import { AdminApiClient } from '../client/adminApiClient'
+import { AdminApiClient, Credential } from '../client/adminApiClient'
 import { EntitlementDefinitionConnectionTransformer } from '../data/transformers/entitlementDefinitionConnectionTransformer'
 import { EntitlementDefinitionTransformer } from '../data/transformers/entitlementDefinitionTransformer'
 import { EntitlementsSequencesConnectionTransformer } from '../data/transformers/entitlementsSequencesConnectionTransformer'
@@ -789,14 +789,14 @@ export class DefaultSudoEntitlementsAdminClient
   private readonly adminApiClient: AdminApiClient
 
   public constructor(
-    apiKey: string,
+    apiKeyOrCred: string | Credential,
     options?: DefaultSudoEntitlementsAdminClientOptions,
   ) {
     const privateOptions = options as
       | DefaultSudoEntitlementsAdminClientPrivateOptions
       | undefined
     this.adminApiClient =
-      privateOptions?.adminApiClient ?? new AdminApiClient(apiKey)
+      privateOptions?.adminApiClient ?? new AdminApiClient(apiKeyOrCred)
   }
 
   async getEntitlementsSet(name: string): Promise<EntitlementsSet | undefined> {
