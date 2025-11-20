@@ -23,7 +23,7 @@ import {
   AWSCredential,
 } from '../../src'
 
-dotenv.config()
+dotenv.config({ quiet: true })
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 require('isomorphic-fetch')

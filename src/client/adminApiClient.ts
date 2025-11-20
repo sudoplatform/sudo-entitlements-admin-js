@@ -1,16 +1,12 @@
 import {
   AppSyncError,
-  AppSyncNetworkError,
   ConfigurationManager,
   DefaultConfigurationManager,
+  GraphQLNetworkError,
   mapGraphQLToClientError,
   mapNetworkErrorToClientError,
   UnknownGraphQLError,
 } from '@sudoplatform/sudo-common'
-import { NormalizedCacheObject } from 'apollo-cache-inmemory'
-import { ApolloError } from 'apollo-client'
-import AWSAppSyncClient, { AUTH_TYPE } from 'aws-appsync'
-import { AuthOptions } from 'aws-appsync-auth-link'
 import { GraphQLError } from 'graphql'
 import * as t from 'io-ts'
 import { ErrorCodeTransformer } from '../data/transformers/errorCodeTransformer'
@@ -102,11 +98,16 @@ import {
   NegativeEntitlementError,
   OverflowedEntitlementError,
 } from '../global/error'
+import {
+  GraphQLClient,
+  GraphQLClientAuthMode,
+  internal,
+} from '@sudoplatform/sudo-user'
 
 export interface AWSCredential {
   accessKeyId: string
   secretAccessKey: string
-  sessionToken: string
+  sessionToken?: string
 }
 
 export type Credential =
@@ -115,15 +116,6 @@ export type Credential =
       type: 'IAM'
       credential?: AWSCredential
     }
-
-export interface AdminApiClientProps {
-  apiKey: string
-  region: string
-  graphqlUrl: string
-}
-
-const mutationFetchPolicy = 'no-cache'
-const queryFetchPolicy = 'network-only'
 
 // eslint-disable-next-line tree-shaking/no-side-effects-in-initialization
 export const AdminConsoleProject = t.type({
@@ -139,37 +131,21 @@ export type AdminConsoleProject = t.TypeOf<typeof AdminConsoleProject>
  * For auth, we allow IAM auth primarily to enable our own
  * system tests.
  */
-function getAuthOptions(credential: Credential): AuthOptions {
-  if (credential.type === 'IAM') {
-    if (credential.credential) {
-      return {
-        type: AUTH_TYPE.AWS_IAM,
-        credentials: credential.credential,
-      }
-    } else {
-      const accessKeyId = process.env.AWS_ACCESS_KEY_ID
-      const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
-      const sessionToken = process.env.AWS_SESSION_TOKEN
+function fillCredentials(credential: Credential): Credential {
+  if (credential.type === 'IAM' && !credential.credential) {
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID
+    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
+    const sessionToken = process.env.AWS_SESSION_TOKEN
 
-      if (accessKeyId && secretAccessKey) {
-        return {
-          type: AUTH_TYPE.AWS_IAM,
-          credentials: {
-            accessKeyId,
-            secretAccessKey,
-            sessionToken,
-          },
-        }
-      } else {
-        return {
-          type: AUTH_TYPE.AWS_IAM,
-          credentials: null,
-        }
+    if (accessKeyId && secretAccessKey) {
+      credential.credential = {
+        accessKeyId,
+        secretAccessKey,
+        sessionToken,
       }
     }
-  } else {
-    return { type: AUTH_TYPE.API_KEY, apiKey: credential.key }
   }
+  return credential
 }
 
 /**
@@ -177,12 +153,12 @@ function getAuthOptions(credential: Credential): AuthOptions {
  */
 export class AdminApiClient {
   private readonly configurationManager: ConfigurationManager
-  private readonly client: AWSAppSyncClient<NormalizedCacheObject>
+  private readonly client: GraphQLClient
 
   public constructor(
     apiKeyOrCred: string | Credential,
     configurationManager?: ConfigurationManager,
-    client?: AWSAppSyncClient<NormalizedCacheObject>,
+    client?: GraphQLClient,
   ) {
     this.configurationManager =
       configurationManager ?? DefaultConfigurationManager.getInstance()
@@ -190,26 +166,34 @@ export class AdminApiClient {
       AdminConsoleProject,
       'adminConsoleProjectService',
     )
-    const credential: Credential =
+    const credential: Credential = fillCredentials(
       typeof apiKeyOrCred === 'string'
         ? apiKeyOrCred === 'IAM'
           ? { type: 'IAM' }
           : { type: 'API_KEY', key: apiKeyOrCred }
-        : apiKeyOrCred
+        : apiKeyOrCred,
+    )
 
     this.client =
       client ??
-      new AWSAppSyncClient<NormalizedCacheObject>({
-        url: config.apiUrl,
+      new internal.AmplifyClient({
+        graphqlUrl: config.apiUrl,
         region: config.region,
-        auth: getAuthOptions(credential),
-        disableOffline: true,
+        authMode:
+          credential.type === 'IAM'
+            ? GraphQLClientAuthMode.IAM
+            : GraphQLClientAuthMode.ApiKey,
+        apiKey: credential.type === 'API_KEY' ? credential.key : undefined,
+        credentials:
+          credential.type === 'IAM' ? credential.credential : undefined,
       })
   }
 
-  public graphQLErrorToClientError(error: AppSyncError): Error {
-    if (error.errorType?.startsWith('sudoplatform.entitlements.')) {
-      const code = error.errorType.replace('sudoplatform.entitlements.', '')
+  public graphQLErrorToClientError(error: AppSyncError | GraphQLError): Error {
+    const errorType = 'errorType' in error ? error.errorType : error.message
+
+    if (errorType?.startsWith('sudoplatform.entitlements.')) {
+      const code = errorType.replace('sudoplatform.entitlements.', '')
       switch (code) {
         case 'AlreadyUpdatedError': {
           return new AlreadyUpdatedError()
@@ -261,13 +245,16 @@ export class AdminApiClient {
     thrownError?: Error,
   ): never {
     if (thrownError) {
-      const appSyncNetworkError = thrownError as AppSyncNetworkError
-      if (appSyncNetworkError.networkError) {
-        throw mapNetworkErrorToClientError(appSyncNetworkError)
+      const networkError = thrownError as GraphQLNetworkError
+      if (networkError.originalError) {
+        throw mapNetworkErrorToClientError(networkError)
       }
-      const apolloError = thrownError as ApolloError
-      if (apolloError.graphQLErrors?.[0]) {
-        returnedError = apolloError.graphQLErrors?.[0]
+      if (
+        'graphQLErrors' in thrownError &&
+        Array.isArray(thrownError.graphQLErrors) &&
+        thrownError.graphQLErrors.length > 0
+      ) {
+        returnedError = thrownError.graphQLErrors?.[0] as AppSyncError
       } else if ((thrownError as AppSyncError).errorType) {
         returnedError = thrownError as AppSyncError
       } else {
@@ -290,7 +277,6 @@ export class AdminApiClient {
       const result = await this.client.query<GetEntitlementsSetQuery>({
         query: GetEntitlementsSetDocument,
         variables: { input },
-        fetchPolicy: queryFetchPolicy,
       })
       graphqlError = result.errors?.[0]
       if (!graphqlError) {
@@ -312,7 +298,6 @@ export class AdminApiClient {
       const result = await this.client.query<ListEntitlementsSetsQuery>({
         query: ListEntitlementsSetsDocument,
         variables: { nextToken: nextToken ?? null },
-        fetchPolicy: queryFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]
@@ -335,7 +320,6 @@ export class AdminApiClient {
       const result = await this.client.query<GetEntitlementDefinitionQuery>({
         query: GetEntitlementDefinitionDocument,
         variables: { input },
-        fetchPolicy: queryFetchPolicy,
       })
       graphqlError = result.errors?.[0]
       if (!graphqlError) {
@@ -358,7 +342,6 @@ export class AdminApiClient {
       const result = await this.client.query<ListEntitlementDefinitionsQuery>({
         query: ListEntitlementDefinitionsDocument,
         variables: { limit: limit, nextToken: nextToken ?? null },
-        fetchPolicy: queryFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]
@@ -381,7 +364,6 @@ export class AdminApiClient {
       const result = await this.client.query<GetEntitlementsForUserQuery>({
         query: GetEntitlementsForUserDocument,
         variables: { input },
-        fetchPolicy: queryFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]
@@ -404,7 +386,6 @@ export class AdminApiClient {
       const result = await this.client.mutate<AddEntitlementsSetMutation>({
         mutation: AddEntitlementsSetDocument,
         variables: { input },
-        fetchPolicy: mutationFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]
@@ -431,7 +412,6 @@ export class AdminApiClient {
       const result = await this.client.mutate<SetEntitlementsSetMutation>({
         mutation: SetEntitlementsSetDocument,
         variables: { input },
-        fetchPolicy: mutationFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]
@@ -458,7 +438,6 @@ export class AdminApiClient {
       const result = await this.client.mutate<RemoveEntitlementsSetMutation>({
         mutation: RemoveEntitlementsSetDocument,
         variables: { input },
-        fetchPolicy: mutationFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]
@@ -487,7 +466,6 @@ export class AdminApiClient {
       const result = await this.client.query<GetEntitlementsSequenceQuery>({
         query: GetEntitlementsSequenceDocument,
         variables: { input },
-        fetchPolicy: queryFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]
@@ -510,7 +488,6 @@ export class AdminApiClient {
       const result = await this.client.query<ListEntitlementsSequencesQuery>({
         query: ListEntitlementsSequencesDocument,
         variables: { nextToken: nextToken ?? null },
-        fetchPolicy: queryFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]
@@ -533,7 +510,6 @@ export class AdminApiClient {
       const result = await this.client.mutate<AddEntitlementsSequenceMutation>({
         mutation: AddEntitlementsSequenceDocument,
         variables: { input },
-        fetchPolicy: mutationFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]
@@ -562,7 +538,6 @@ export class AdminApiClient {
       const result = await this.client.mutate<SetEntitlementsSequenceMutation>({
         mutation: SetEntitlementsSequenceDocument,
         variables: { input },
-        fetchPolicy: mutationFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]
@@ -592,7 +567,6 @@ export class AdminApiClient {
         await this.client.mutate<RemoveEntitlementsSequenceMutation>({
           mutation: RemoveEntitlementsSequenceDocument,
           variables: { input },
-          fetchPolicy: mutationFetchPolicy,
         })
 
       graphqlError = result.errors?.[0]
@@ -622,7 +596,6 @@ export class AdminApiClient {
         await this.client.mutate<ApplyEntitlementsSequenceToUserMutation>({
           mutation: ApplyEntitlementsSequenceToUserDocument,
           variables: { input },
-          fetchPolicy: mutationFetchPolicy,
         })
 
       graphqlError = result.errors?.[0]
@@ -652,7 +625,6 @@ export class AdminApiClient {
         await this.client.mutate<ApplyEntitlementsSequenceToUsersMutation>({
           mutation: ApplyEntitlementsSequenceToUsersDocument,
           variables: { input },
-          fetchPolicy: mutationFetchPolicy,
         })
 
       graphqlError = result.errors?.[0]
@@ -682,7 +654,6 @@ export class AdminApiClient {
         await this.client.mutate<ApplyEntitlementsSetToUserMutation>({
           mutation: ApplyEntitlementsSetToUserDocument,
           variables: { input },
-          fetchPolicy: mutationFetchPolicy,
         })
 
       graphqlError = result.errors?.[0]
@@ -712,7 +683,6 @@ export class AdminApiClient {
         await this.client.mutate<ApplyEntitlementsSetToUsersMutation>({
           mutation: ApplyEntitlementsSetToUsersDocument,
           variables: { input },
-          fetchPolicy: mutationFetchPolicy,
         })
 
       graphqlError = result.errors?.[0]
@@ -741,7 +711,6 @@ export class AdminApiClient {
       const result = await this.client.mutate<ApplyEntitlementsToUserMutation>({
         mutation: ApplyEntitlementsToUserDocument,
         variables: { input },
-        fetchPolicy: mutationFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]
@@ -771,7 +740,6 @@ export class AdminApiClient {
         {
           mutation: ApplyEntitlementsToUsersDocument,
           variables: { input },
-          fetchPolicy: mutationFetchPolicy,
         },
       )
 
@@ -802,7 +770,6 @@ export class AdminApiClient {
         await this.client.mutate<ApplyExpendableEntitlementsToUserMutation>({
           mutation: ApplyExpendableEntitlementsToUserDocument,
           variables: { input },
-          fetchPolicy: mutationFetchPolicy,
         })
 
       graphqlError = result.errors?.[0]
@@ -831,7 +798,6 @@ export class AdminApiClient {
       const result = await this.client.mutate<RemoveEntitledUserMutation>({
         mutation: RemoveEntitledUserDocument,
         variables: { input },
-        fetchPolicy: mutationFetchPolicy,
       })
 
       graphqlError = result.errors?.[0]

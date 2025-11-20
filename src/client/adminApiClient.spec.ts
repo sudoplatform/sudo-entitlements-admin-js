@@ -7,9 +7,7 @@ import {
   NoEntitlementsError,
   UnknownGraphQLError,
 } from '@sudoplatform/sudo-common'
-import { NormalizedCacheObject } from 'apollo-cache-inmemory'
-import { NetworkStatus } from 'apollo-client'
-import { AWSAppSyncClient } from 'aws-appsync'
+
 import { GraphQLError } from 'graphql'
 import {
   anything,
@@ -82,6 +80,7 @@ import {
   ApplyExpendableEntitlementsToUserDocument,
 } from '../gen/graphqlTypes'
 import { AdminApiClient, AdminConsoleProject } from './adminApiClient'
+import { GraphQLClient } from '@sudoplatform/sudo-user'
 
 describe('AdminApiClient test suite', () => {
   const adminApiKey = 'admin-api-key'
@@ -93,7 +92,7 @@ describe('AdminApiClient test suite', () => {
     clientId: '3svojfatkq6sonb7ium25l7bad',
   }
   const mockConfigurationManager = mock<ConfigurationManager>()
-  const mockClient = mock<AWSAppSyncClient<NormalizedCacheObject>>()
+  const mockClient = mock<GraphQLClient>()
 
   let adminApiClient: AdminApiClient
 
@@ -179,9 +178,6 @@ describe('AdminApiClient test suite', () => {
         mockClient.query<GetEntitlementsForUserQuery>(anything()),
       ).thenResolve({
         data: { getEntitlementsForUser: entitlementsConsumption },
-        loading: false,
-        stale: false,
-        networkStatus: NetworkStatus.ready,
       })
 
       await expect(
@@ -192,7 +188,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualQuery).toEqual({
         query: GetEntitlementsForUserDocument,
         variables: { input: { externalId } },
-        fetchPolicy: 'network-only',
       })
       verify(mockClient.query(anything())).once()
     })
@@ -205,9 +200,6 @@ describe('AdminApiClient test suite', () => {
       ).thenResolve({
         errors: [error],
         data: null as unknown as GetEntitlementsForUserQuery,
-        loading: false,
-        stale: false,
-        networkStatus: NetworkStatus.ready,
       })
       await expect(
         adminApiClient.getEntitlementsForUser({ externalId }),
@@ -243,9 +235,6 @@ describe('AdminApiClient test suite', () => {
     it('should return results', async () => {
       when(mockClient.query<GetEntitlementsSetQuery>(anything())).thenResolve({
         data: { getEntitlementsSet: entitlementsSet },
-        loading: false,
-        stale: false,
-        networkStatus: NetworkStatus.ready,
       })
 
       await expect(
@@ -256,7 +245,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualQuery).toEqual({
         query: GetEntitlementsSetDocument,
         variables: { input: { name: entitlementsSet.name } },
-        fetchPolicy: 'network-only',
       })
       verify(mockClient.query(anything())).once()
     })
@@ -268,9 +256,6 @@ describe('AdminApiClient test suite', () => {
     `('should return null for result $result', async ({ result }) => {
       when(mockClient.query<GetEntitlementsSetQuery>(anything())).thenResolve({
         data: { getEntitlementsSet: result },
-        loading: false,
-        stale: false,
-        networkStatus: NetworkStatus.ready,
       })
 
       await expect(
@@ -281,7 +266,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualQuery).toEqual({
         query: GetEntitlementsSetDocument,
         variables: { input: { name: entitlementsSet.name } },
-        fetchPolicy: 'network-only',
       })
       verify(mockClient.query(anything())).once()
     })
@@ -308,9 +292,6 @@ describe('AdminApiClient test suite', () => {
               items: [entitlementsSet],
             },
           },
-          loading: false,
-          stale: false,
-          networkStatus: NetworkStatus.ready,
         },
       )
 
@@ -322,7 +303,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualQuery).toEqual({
         query: ListEntitlementsSetsDocument,
         variables: { nextToken: null },
-        fetchPolicy: 'network-only',
       })
       verify(mockClient.query(anything())).once()
     })
@@ -346,9 +326,6 @@ describe('AdminApiClient test suite', () => {
         mockClient.query<GetEntitlementDefinitionQuery>(anything()),
       ).thenResolve({
         data: { getEntitlementDefinition: entitlementDefinition },
-        loading: false,
-        stale: false,
-        networkStatus: NetworkStatus.ready,
       })
 
       await expect(
@@ -361,7 +338,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualQuery).toEqual({
         query: GetEntitlementDefinitionDocument,
         variables: { input: { name: entitlementDefinition.name } },
-        fetchPolicy: 'network-only',
       })
       verify(mockClient.query(anything())).once()
     })
@@ -375,9 +351,6 @@ describe('AdminApiClient test suite', () => {
         mockClient.query<GetEntitlementDefinitionQuery>(anything()),
       ).thenResolve({
         data: { getEntitlementDefinition: result },
-        loading: false,
-        stale: false,
-        networkStatus: NetworkStatus.ready,
       })
 
       await expect(
@@ -390,7 +363,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualQuery).toEqual({
         query: GetEntitlementDefinitionDocument,
         variables: { input: { name: entitlementDefinition.name } },
-        fetchPolicy: 'network-only',
       })
       verify(mockClient.query(anything())).once()
     })
@@ -420,9 +392,6 @@ describe('AdminApiClient test suite', () => {
             items: [entitlementDefinition],
           },
         },
-        loading: false,
-        stale: false,
-        networkStatus: NetworkStatus.ready,
       })
 
       await expect(
@@ -435,7 +404,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualQuery).toEqual({
         query: ListEntitlementDefinitionsDocument,
         variables: { nextToken: null },
-        fetchPolicy: 'network-only',
       })
       verify(mockClient.query(anything())).once()
     })
@@ -469,7 +437,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: AddEntitlementsSetDocument,
         variables: { input: entitlementsSet },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -478,7 +445,7 @@ describe('AdminApiClient test suite', () => {
       when(
         mockClient.mutate<AddEntitlementsSetMutation>(anything()),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -489,7 +456,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: AddEntitlementsSetDocument,
         variables: { input: entitlementsSet },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -503,7 +469,7 @@ describe('AdminApiClient test suite', () => {
         mockClient.mutate<AddEntitlementsSetMutation>(anything()),
       ).thenResolve({
         errors: [error],
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -554,7 +520,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: SetEntitlementsSetDocument,
         variables: { input: entitlementsSet },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -563,7 +528,7 @@ describe('AdminApiClient test suite', () => {
       when(
         mockClient.mutate<SetEntitlementsSetMutation>(anything()),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -574,7 +539,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: SetEntitlementsSetDocument,
         variables: { input: entitlementsSet },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -588,7 +552,7 @@ describe('AdminApiClient test suite', () => {
         mockClient.mutate<SetEntitlementsSetMutation>(anything()),
       ).thenResolve({
         errors: [error],
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -639,7 +603,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: RemoveEntitlementsSetDocument,
         variables: { input: { name: entitlementsSet.name } },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -663,7 +626,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: RemoveEntitlementsSetDocument,
         variables: { input: { name: entitlementsSet.name } },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -672,7 +634,7 @@ describe('AdminApiClient test suite', () => {
       when(
         mockClient.mutate<RemoveEntitlementsSetMutation>(anything()),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -683,7 +645,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: RemoveEntitlementsSetDocument,
         variables: { input: { name: entitlementsSet.name } },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -722,7 +683,6 @@ describe('AdminApiClient test suite', () => {
         variables: {
           input: { externalId, entitlementsSetName: entitlementsSet.name },
         },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -731,7 +691,7 @@ describe('AdminApiClient test suite', () => {
       when(
         mockClient.mutate<ApplyEntitlementsSetToUserMutation>(anything()),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -747,7 +707,6 @@ describe('AdminApiClient test suite', () => {
         variables: {
           input: { externalId, entitlementsSetName: entitlementsSet.name },
         },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -761,7 +720,7 @@ describe('AdminApiClient test suite', () => {
         mockClient.mutate<ApplyEntitlementsSetToUserMutation>(anything()),
       ).thenResolve({
         errors: [error],
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -835,7 +794,6 @@ describe('AdminApiClient test suite', () => {
             ],
           },
         },
-        fetchPolicy: 'no-cache',
       })
     })
 
@@ -843,7 +801,7 @@ describe('AdminApiClient test suite', () => {
       when(
         mockClient.mutate<ApplyEntitlementsSetToUsersMutation>(anything()),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -868,7 +826,6 @@ describe('AdminApiClient test suite', () => {
             ],
           },
         },
-        fetchPolicy: 'no-cache',
       })
     })
 
@@ -881,7 +838,7 @@ describe('AdminApiClient test suite', () => {
         mockClient.mutate<ApplyEntitlementsSetToUserMutation>(anything()),
       ).thenResolve({
         errors: [error],
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -946,7 +903,6 @@ describe('AdminApiClient test suite', () => {
         variables: {
           input: { externalId, entitlements: userEntitlements.entitlements },
         },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -955,7 +911,7 @@ describe('AdminApiClient test suite', () => {
       when(
         mockClient.mutate<ApplyEntitlementsToUserMutation>(anything()),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -971,7 +927,6 @@ describe('AdminApiClient test suite', () => {
         variables: {
           input: { externalId, entitlements: userEntitlements.entitlements },
         },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -985,7 +940,7 @@ describe('AdminApiClient test suite', () => {
         mockClient.mutate<ApplyEntitlementsToUserMutation>(anything()),
       ).thenResolve({
         errors: [error],
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1057,7 +1012,6 @@ describe('AdminApiClient test suite', () => {
             requestId,
           },
         },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1068,7 +1022,7 @@ describe('AdminApiClient test suite', () => {
           anything(),
         ),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1089,7 +1043,6 @@ describe('AdminApiClient test suite', () => {
             requestId,
           },
         },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1105,7 +1058,7 @@ describe('AdminApiClient test suite', () => {
         ),
       ).thenResolve({
         errors: [error],
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1148,7 +1101,7 @@ describe('AdminApiClient test suite', () => {
         ),
       ).thenResolve({
         errors: [error],
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1191,7 +1144,7 @@ describe('AdminApiClient test suite', () => {
         ),
       ).thenResolve({
         errors: [error],
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1248,9 +1201,6 @@ describe('AdminApiClient test suite', () => {
         mockClient.query<GetEntitlementsSequenceQuery>(anything()),
       ).thenResolve({
         data: { getEntitlementsSequence: entitlementsSequence },
-        loading: false,
-        stale: false,
-        networkStatus: NetworkStatus.ready,
       })
 
       await expect(
@@ -1263,7 +1213,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualQuery).toEqual({
         query: GetEntitlementsSequenceDocument,
         variables: { input: { name: entitlementsSequence.name } },
-        fetchPolicy: 'network-only',
       })
       verify(mockClient.query(anything())).once()
     })
@@ -1277,9 +1226,6 @@ describe('AdminApiClient test suite', () => {
         mockClient.query<GetEntitlementsSequenceQuery>(anything()),
       ).thenResolve({
         data: { getEntitlementsSequence: result },
-        loading: false,
-        stale: false,
-        networkStatus: NetworkStatus.ready,
       })
 
       await expect(
@@ -1292,7 +1238,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualQuery).toEqual({
         query: GetEntitlementsSequenceDocument,
         variables: { input: { name: entitlementsSequence.name } },
-        fetchPolicy: 'network-only',
       })
       verify(mockClient.query(anything())).once()
     })
@@ -1322,9 +1267,6 @@ describe('AdminApiClient test suite', () => {
             items: [entitlementsSequence],
           },
         },
-        loading: false,
-        stale: false,
-        networkStatus: NetworkStatus.ready,
       })
 
       await expect(adminApiClient.listEntitlementsSequences()).resolves.toEqual(
@@ -1337,7 +1279,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualQuery).toEqual({
         query: ListEntitlementsSequencesDocument,
         variables: { nextToken: null },
-        fetchPolicy: 'network-only',
       })
       verify(mockClient.query(anything())).once()
     })
@@ -1371,7 +1312,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: AddEntitlementsSequenceDocument,
         variables: { input: entitlementsSequence },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1380,7 +1320,7 @@ describe('AdminApiClient test suite', () => {
       when(
         mockClient.mutate<AddEntitlementsSequenceMutation>(anything()),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1391,7 +1331,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: AddEntitlementsSequenceDocument,
         variables: { input: entitlementsSequence },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1405,7 +1344,7 @@ describe('AdminApiClient test suite', () => {
         mockClient.mutate<AddEntitlementsSequenceMutation>(anything()),
       ).thenResolve({
         errors: [error],
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1456,7 +1395,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: SetEntitlementsSequenceDocument,
         variables: { input: entitlementsSequence },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1465,7 +1403,7 @@ describe('AdminApiClient test suite', () => {
       when(
         mockClient.mutate<SetEntitlementsSequenceMutation>(anything()),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1476,7 +1414,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: SetEntitlementsSequenceDocument,
         variables: { input: entitlementsSequence },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1512,7 +1449,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: RemoveEntitlementsSequenceDocument,
         variables: { input: { name: entitlementsSequence.name } },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1538,7 +1474,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: RemoveEntitlementsSequenceDocument,
         variables: { input: { name: entitlementsSequence.name } },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1547,7 +1482,7 @@ describe('AdminApiClient test suite', () => {
       when(
         mockClient.mutate<RemoveEntitlementsSequenceMutation>(anything()),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1560,7 +1495,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: RemoveEntitlementsSequenceDocument,
         variables: { input: { name: entitlementsSequence.name } },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1613,7 +1547,6 @@ describe('AdminApiClient test suite', () => {
             transitionsRelativeToEpochMs: now,
           },
         },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1622,7 +1555,7 @@ describe('AdminApiClient test suite', () => {
       when(
         mockClient.mutate<ApplyEntitlementsSequenceToUserMutation>(anything()),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1641,7 +1574,6 @@ describe('AdminApiClient test suite', () => {
             entitlementsSequenceName: entitlementsSequence.name,
           },
         },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1655,7 +1587,7 @@ describe('AdminApiClient test suite', () => {
         mockClient.mutate<ApplyEntitlementsSequenceToUserMutation>(anything()),
       ).thenResolve({
         errors: [error],
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1715,7 +1647,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: RemoveEntitledUserDocument,
         variables: { input: { externalId: 'dummy_external_id' } },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1739,7 +1670,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: RemoveEntitledUserDocument,
         variables: { input: { externalId: 'dummy_external_id' } },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1748,7 +1678,7 @@ describe('AdminApiClient test suite', () => {
       when(
         mockClient.mutate<RemoveEntitledUserMutation>(anything()),
       ).thenResolve({
-        data: null,
+        data: null as any,
       })
 
       await expect(
@@ -1759,7 +1689,6 @@ describe('AdminApiClient test suite', () => {
       expect(actualMutation).toEqual({
         mutation: RemoveEntitledUserDocument,
         variables: { input: { externalId: 'dummy_external_id' } },
-        fetchPolicy: 'no-cache',
       })
       verify(mockClient.mutate(anything())).once()
     })
@@ -1803,6 +1732,9 @@ describe('AdminApiClient test suite', () => {
           name: '',
           message: '',
           locations: undefined,
+          get [Symbol.toStringTag](): string {
+            return ''
+          },
           path: undefined,
           nodes: undefined,
           source: undefined,
