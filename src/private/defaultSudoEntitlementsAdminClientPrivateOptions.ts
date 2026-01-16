@@ -1,7 +1,6 @@
 import { AdminApiClient } from '../client/adminApiClient'
 import { DefaultSudoEntitlementsAdminClientOptions } from '../entitlementsAdmin/entitlementsAdminClient'
 
-export interface DefaultSudoEntitlementsAdminClientPrivateOptions
-  extends DefaultSudoEntitlementsAdminClientOptions {
+export interface DefaultSudoEntitlementsAdminClientPrivateOptions extends DefaultSudoEntitlementsAdminClientOptions {
   adminApiClient?: AdminApiClient
 }

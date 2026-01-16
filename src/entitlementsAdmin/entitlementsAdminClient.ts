@@ -783,9 +783,7 @@ export interface SudoEntitlementsAdminClient {
 // eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type
 export interface DefaultSudoEntitlementsAdminClientOptions {}
 
-export class DefaultSudoEntitlementsAdminClient
-  implements SudoEntitlementsAdminClient
-{
+export class DefaultSudoEntitlementsAdminClient implements SudoEntitlementsAdminClient {
   private readonly adminApiClient: AdminApiClient
 
   public constructor(
