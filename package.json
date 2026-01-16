@@ -16,7 +16,7 @@
     "verify": "true",
     "unit-test": "jest --verbose --coverage src",
     "integration-test": "jest test/integration",
-    "smoketest": "yarn build:transpile && yarn unit-test && jest test/integration/smoketest",
+    "smoketest": "yarn build:transpile && yarn unit-test && yarn integration-test",
     "clean": "yarn rimraf ./docs ./lib ./cjs ./types",
     "build": "yarn codegen && yarn build:transpile && yarn build:docs",
     "build:transpile": "concurrently \"yarn build:transpile:declarations\" \"yarn build:transpile:cjs\" \"yarn build:transpile:esm\"",
