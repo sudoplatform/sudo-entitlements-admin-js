@@ -76,6 +76,7 @@ jobs:
           mkdir -p config
           rm -rf config/*
           echo "$SUDO_PLATFORM_CONFIG" > config/sudoplatformconfig.json
+          unset SUDO_PLATFORM_CONFIG
           yarn smoketest
         working-directory: ${{ env.PACKAGE_DIR }}
 
